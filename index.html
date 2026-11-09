@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en" data-size="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingredient Lab — Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>/* ===== shared component styles ===== */
+:root{
+  --ink:#1d2433; --paper:#fbf7ee; --grid:#e8e0cc; --card:#fffdf8; --muted:#4a5263;
+  --blue:#0072B2; --sky:#56B4E9; --orange:#E69F00; --verm:#D55E00; --green:#009E73; --yellow:#F0E442;
+  --hand: 'Kalam', 'Comic Sans MS', cursive; --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --wob: 255px 18px 225px 18px / 18px 225px 18px 255px;
+  --wob2: 18px 225px 18px 255px / 255px 18px 225px 18px;
+  --sh: 4px 4px 0 var(--ink);
+}
+html{font-size:18px} html[data-size="2"]{font-size:21px} html[data-size="3"]{font-size:25px}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--body);color:var(--ink);line-height:1.5;
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px}
+html.contrast{--paper:#fff;--grid:#fff;--card:#fff;--muted:#000;--ink:#000}
+html.contrast body{background-image:none}
+html.contrast .btn, html.contrast .paper, html.contrast .preset{border-width:3.5px}
+html.still *{animation:none!important;transition:none!important}
+h1,h2,h3{font-family:var(--hand);font-weight:700;line-height:1.15;margin:.2em 0 .4em}
+h4{margin:.2em 0 .3em;font-size:1rem}
+p{margin:.35em 0 .6em}
+.small{font-size:.85rem;color:var(--muted)}
+a{color:var(--blue)}
+:focus-visible{outline:4px solid var(--blue);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.paper{background:var(--card);border:2.5px solid var(--ink);border-radius:var(--wob);box-shadow:var(--sh)}
+.btn{font:inherit;font-weight:700;cursor:pointer;background:var(--yellow);color:#1d2433;border:2.5px solid var(--ink);border-radius:var(--wob2);
+  padding:.65em 1.2em;box-shadow:3px 3px 0 var(--ink);min-height:48px;transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn.ghost{background:var(--card)}
+.btn.blue{background:var(--sky)}
+.btn.green{background:#7fd1b5}
+.tog{font:inherit;cursor:pointer;background:var(--card);border:2px solid var(--ink);border-radius:10px;padding:.35em .8em;min-height:44px;min-width:48px}
+.tog[aria-pressed="true"]{background:var(--ink);color:#fff}
+.tog[aria-pressed="true"]::before{content:'✓ '}
+input[type=text],input[type=number],textarea,select{font:inherit;color:var(--ink);background:#fff;border:2.5px solid var(--ink);border-radius:10px;padding:.55em .7em;width:100%;min-height:48px}
+textarea{min-height:7em;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--blue);height:36px}
+input[type=checkbox]{width:1.3em;height:1.3em;accent-color:var(--blue);vertical-align:middle}
+label{font-weight:700}
+.kicon{flex:none;vertical-align:middle}
+
+/* screens */
+.screen{display:none} .screen.active{display:block;animation:inup .35s ease}
+@keyframes inup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* guide */
+.nimbu{width:100%;height:auto;display:block}
+#guide .mouth{transform-origin:70px 94px;transform-box:view-box}
+#guide.talking .mouth{animation:talk .22s infinite alternate}
+@keyframes talk{to{transform:scaleY(2.4)}}
+#guide .eye{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+#guideText{font-family:var(--hand);font-size:1.12rem;line-height:1.4}
+#guideText.pop{animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.97);opacity:.4}to{transform:none;opacity:1}}
+
+/* presets */
+.preset{font:inherit;cursor:pointer;text-align:left;background:var(--card);border:2.5px solid var(--ink);border-radius:var(--wob);box-shadow:3px 3px 0 var(--ink);padding:.7em .9em;display:grid;grid-template-columns:auto 1fr;column-gap:.6em;align-items:center;min-height:64px}
+.preset:hover{background:#fff6c9}
+.preset .pe{font-size:1.8rem;grid-row:span 2}
+.preset .pn{font-weight:700}
+.preset .pc{font-size:.8rem;color:var(--muted)}
+
+/* lab */
+.labsvg{width:100%;height:auto;display:block}
+#jug{transition:transform .35s ease}
+#jugInner{transform-box:fill-box;transform-origin:85% 70%;transition:transform .35s ease}
+#jug.tilt #jugInner{transform:rotate(-58deg)}
+#stirrer{transform-origin:280px 300px}
+#stirrer.spin #blade{animation:stir .3s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes stir{0%{transform:scaleX(1)}50%{transform:scaleX(.15)}100%{transform:scaleX(1)}}
+#strip{list-style:none;margin:0;padding:.3em;display:flex;gap:.4em;overflow-x:auto;scrollbar-width:thin}
+#strip li{flex:none;display:flex;align-items:center;gap:.3em;font-size:.8rem;padding:.25em .6em;border:2px dashed var(--muted);border-radius:999px;background:var(--card);opacity:.7}
+#strip li.done{border-style:solid;opacity:1}
+#strip li.done span::after{content:' ✓'}
+#strip li.now{border:3px solid var(--ink);background:#fff6c9;opacity:1;font-weight:700}
+
+/* ingredient card */
+#card h3{font-size:1.5rem;margin:0}
+.ctop{display:flex;gap:.7em;align-items:center}
+.ckind{margin:0}
+.onlabel{font-style:italic}
+.cgrid{display:grid;gap:.6em;margin:.6em 0}
+.cgrid section{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:.6em .8em}
+.cgrid section.home{background:#e6f5ee}
+.world{list-style:none;padding:0;margin:.2em 0;display:grid;gap:.35em}
+.world li{display:grid;grid-template-columns:minmax(7em,auto) auto;gap:.1em .6em;padding:.4em .55em;border:2px solid var(--ink);border-radius:10px;background:var(--card)}
+.world li.mine{outline:3px solid var(--blue);outline-offset:1px}
+.world .wr{font-weight:700}.world .wr em{font-weight:400;font-style:normal;color:var(--blue)}
+.world .ws{justify-self:end;font-size:.82rem;font-weight:700}
+.world .ws b{display:inline-grid;place-items:center;width:1.5em;height:1.5em;border:2px solid var(--ink);border-radius:50%;font-size:.8rem}
+.world .wt{grid-column:1/-1;font-size:.88rem}
+.w-ok .ws b{background:#bfe6d6}.w-limit .ws b{background:#cfe5f5}.w-warn .ws b{background:#fbe39b}.w-ban .ws b{background:#f3b98f;border-radius:3px}
+.w-ban{border-style:dashed!important}
+.why-diff{background:#fff6c9;border-left:5px solid var(--orange);padding:.4em .6em;border-radius:6px}
+.legend{list-style:none;padding:0;display:grid;gap:.3em}
+.legend li{display:flex;align-items:center;gap:.5em}
+
+/* modal / quiz */
+#modal{position:fixed;inset:0;background:rgba(29,36,51,.55);display:none;place-items:center;z-index:50;padding:1rem}
+#modal.open{display:grid}
+.mbox{background:var(--card);border:3px solid var(--ink);border-radius:var(--wob);box-shadow:6px 6px 0 var(--ink);padding:1.2em 1.4em;max-width:640px;width:100%;max-height:92vh;overflow:auto}
+.mtag{font-family:var(--hand);color:var(--verm);font-weight:700;margin:0}
+.opts{display:grid;gap:.5em;margin:.6em 0}
+.opt{font:inherit;text-align:left;cursor:pointer;background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:.6em .8em;display:flex;gap:.6em;align-items:center;min-height:52px}
+.opt:hover:not(:disabled){background:#fff6c9}
+.opt .ol{flex:none;display:grid;place-items:center;width:1.8em;height:1.8em;border:2px solid var(--ink);border-radius:50%;font-weight:700}
+.opt.right{background:#bfe6d6;border-width:4px}
+.opt.wrong{background:#f3d2bd;border-style:dashed}
+.opt .mark{margin-left:auto}
+.mfb p{background:#fff6c9;border-radius:10px;padding:.5em .7em}
+
+/* chat */
+#chat{list-style:none;padding:0;margin:0;display:grid;gap:.7em}
+#chat li{max-width:85%;padding:.6em .9em;border:2.5px solid var(--ink);border-radius:var(--wob);background:#fff}
+#chat li p{margin:0}
+#chat .who{display:block;font-size:.75rem;font-weight:700;color:var(--muted)}
+#chat li.nim{background:#fff9d6;justify-self:start;font-family:var(--hand);font-size:1.08rem}
+#chat li.me{background:#dcefff;justify-self:end}
+#chatOpts{display:flex;flex-wrap:wrap;gap:.5em;margin-top:1em}
+
+/* recipe */
+.ticks{list-style:none;padding:0}.ticks li{padding:.25em 0}
+.ticks label{font-weight:400;display:flex;gap:.5em;align-items:flex-start}
+.steps li{padding:.2em 0}
+.note{background:#e6f5ee;border:2px solid var(--ink);border-radius:10px;padding:.5em .7em}
+.chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em}
+.chips li{display:flex;align-items:center;gap:.3em;border:2px dashed var(--ink);border-radius:999px;padding:.15em .6em;font-size:.85rem;text-decoration:line-through;text-decoration-thickness:2px}
+.compare{width:100%;border-collapse:collapse;margin-top:1em;background:#fff}
+.compare caption{font-family:var(--hand);font-weight:700;font-size:1.2rem;text-align:left;padding-bottom:.3em}
+.compare th,.compare td{border:2px solid var(--ink);padding:.45em .6em;text-align:left;vertical-align:top}
+.compare thead th, .compare tr:first-child th{background:#fff6c9}
+
+/* future */
+.person{margin:0;text-align:center}.person svg{width:100%;max-width:150px;height:auto}
+.person figcaption{font-weight:700;font-size:.9rem}
+.fcard{background:#fff;border:2.5px solid var(--ink);border-radius:14px;padding:.7em .9em}
+.fcard .big{font-size:1.7rem;font-weight:700;margin:0;font-family:var(--hand)}
+.fcard .big span{font-size:.9rem;font-family:var(--body);font-weight:400;color:var(--muted)}
+.meter{margin:.4em 0}
+.mlab{display:flex;justify-content:space-between;gap:.5em;font-size:.9rem}
+.mbar{height:20px;border:2px solid var(--ink);border-radius:6px;overflow:hidden;background:var(--card)}
+.mbar svg{display:block}
+.disclaim{border:2px dashed var(--ink);border-radius:10px;padding:.5em .7em;background:var(--card)}
+
+/* certificate */
+#cert{text-align:center;padding:1.5em;border:4px double var(--ink);background:#fffef6;border-radius:6px;position:relative}
+#cert .ctag{font-family:var(--hand);color:var(--verm);font-weight:700;letter-spacing:.05em}
+#cert h3{font-size:2.4rem;margin:.2em 0;text-decoration:underline wavy var(--orange) 3px;text-underline-offset:8px}
+#cert .cprod{font-family:var(--hand);font-size:1.6rem;font-weight:700}
+#cert .stars{font-size:2.2rem;color:var(--orange);letter-spacing:.15em;-webkit-text-stroke:1px var(--ink)}
+
+[tabindex="-1"]:focus{outline:none}
+.row input[type=range]{flex:1;width:auto;min-width:120px}
+/* force readable colours even when the browser/OS is in dark mode */
+:root{color-scheme:light}
+button,input,select,textarea{color:var(--ink)}
+.opt,.opt:disabled,.preset,.tog,.iconbtn,.tabs button,.btn,.btn:disabled{color:var(--ink)}
+.tog[aria-pressed="true"],.tabs button[aria-selected="true"]{color:#fff}
+.opt:disabled{opacity:1;cursor:default}
+.opt:disabled:not(.right):not(.wrong){opacity:.75}
+.opt.wrong,.opt.right{color:#1d2433}
+
+/* factory line animations */
+.linesvg{width:100%;height:auto;display:block;background:#f6f1e4;border-radius:10px}
+.linesvg .belt{animation:belt 2.6s linear infinite}
+@keyframes belt{from{transform:translateX(0)}to{transform:translateX(130px)}}
+.linesvg .spin,.person .spin{transform-box:view-box;animation:rot 1.8s linear infinite}
+.linesvg .spin.slow{animation-duration:6s}
+@keyframes rot{to{transform:rotate(360deg)}}
+.linesvg .chop{animation:chop .45s ease-in-out infinite alternate}
+@keyframes chop{to{transform:translateY(22px)}}
+.linesvg .fall{animation:fall 1.2s linear infinite}
+@keyframes fall{0%{transform:translateY(0);opacity:1}100%{transform:translateY(80px);opacity:0}}
+.linesvg .rise{animation:rise 1.4s linear infinite}
+@keyframes rise{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-70px);opacity:0}}
+.linesvg .steam{animation:steam 1.6s ease-out infinite}
+@keyframes steam{0%{transform:translateY(10px);opacity:0}40%{opacity:1}100%{transform:translateY(-14px);opacity:0}}
+.linesvg .flame{transform-box:fill-box;transform-origin:50% 100%;animation:flame .4s ease-in-out infinite alternate}
+@keyframes flame{to{transform:scaleY(.7)}}
+.linesvg .shake{animation:shake .25s linear infinite alternate}
+@keyframes shake{to{transform:translateX(6px)}}
+.linesvg .bob{animation:bob .8s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(12px)}}
+.linesvg .pour{animation:pourf .5s ease-in-out infinite alternate}
+@keyframes pourf{to{opacity:.4}}
+#lineSteps{list-style:none;margin:0 0 .7rem;padding:.2rem;display:flex;gap:.4rem;overflow-x:auto}
+#lineSteps li{flex:none;display:flex;align-items:center;gap:.35em;font-size:.85rem;padding:.25em .65em;border:2px dashed var(--muted);border-radius:999px;background:var(--card)}
+#lineSteps .ln{display:inline-grid;place-items:center;width:1.5em;height:1.5em;border:2px solid var(--ink);border-radius:50%;font-size:.75rem;font-weight:700}
+#lineSteps li.done{border-style:solid}#lineSteps li.done .ln{background:var(--green);color:#fff}
+#lineSteps li.now{border:3px solid var(--ink);background:#fff6c9;font-weight:700}#lineSteps li.now .ln{background:var(--yellow)}
+.linecard{padding:.9rem 1.1rem}
+.linecard h3{font-size:1.3rem}
+#lineHome{background:#e6f5ee}
+#lineHome .tool{font-size:1.4em}
+.change{background:#fff6c9;border-left:5px solid var(--orange);padding:.4em .6em;border-radius:6px}
+.line-actions{display:flex;gap:.6rem;align-items:center;margin-top:.8rem}
+.line-actions #lineNext{flex:1}
+#lineCount{font-weight:700;font-size:.9rem}
+
+/* person */
+.person .eat{transform-box:view-box;animation:eat 2s ease-in-out infinite}
+@keyframes eat{0%,55%,100%{transform:rotate(0)}25%,35%{transform:rotate(-140deg)}}
+.person .beat{transform-box:fill-box;transform-origin:center;animation:beat .9s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.18)}30%{transform:scale(1)}}
+.person svg{max-width:240px}
+#people .person figcaption{margin-top:.2rem}
+.yearnow{font-family:var(--hand);font-weight:700;font-size:1.4rem;text-align:center;margin:.2rem 0}
+
+/* nutrient comparison bars */
+.nutcmp{margin-top:1rem}
+.nrow{padding:.5rem 0;border-bottom:1.5px dashed var(--grid)}
+.nlab{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:baseline}
+.nwin{font-size:.8rem;font-weight:700;border:2px solid var(--ink);border-radius:999px;padding:0 .55em;background:#fff}
+.nwin.w-homemade{background:#bfe6d6}.nwin.w-bought{background:#fbe39b}
+.nbar{display:grid;grid-template-columns:7.2em 1fr 5.6em;gap:.5rem;align-items:center;margin:.2rem 0;font-size:.88rem}
+.ntrack{height:18px;border:2px solid var(--ink);border-radius:5px;overflow:hidden;background:#fff}
+.ntrack svg{display:block;width:100%;height:100%}
+.nval{font-weight:700;text-align:right}
+.duo{margin:.4rem 0}
+
+.people-box{scroll-margin-top:120px}
+#lineNext{white-space:nowrap}
+.stage{contain:layout paint}
+</style>
+<style>
+/* ===== DESKTOP DESIGN: lab notebook on a workbench ===== */
+body{min-width:900px}
+.wrap{max-width:1380px;margin:0 auto;padding:1.2rem 1.8rem 3rem}
+header.top{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.7rem}
+.brand svg{width:58px;height:58px}
+.brand h1{font-size:2.6rem;margin:0}
+.brand h1 span{color:var(--verm)}
+.brand p{margin:0;font-size:.95rem;color:var(--muted)}
+.quick{margin-left:auto;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.quick .lbl{font-size:.85rem;font-weight:700}
+#progress{list-style:none;display:flex;gap:0;margin:1.1rem 0 1.3rem;padding:0;border-bottom:2.5px solid var(--ink)}
+#progress li{flex:1;text-align:center;padding:.45rem .3rem .5rem;font-weight:700;font-size:.9rem;color:var(--muted);border:2.5px solid transparent;border-bottom:none;border-radius:14px 14px 0 0;margin-bottom:-2.5px;position:relative}
+#progress li b{display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;border-radius:50%;margin-right:.35em;font-size:.85rem}
+#progress li.done{color:var(--ink);cursor:pointer}
+#progress li.done b{background:var(--green);color:#fff;border-color:var(--ink)}
+#progress li.done b::after{content:''}
+#progress li.now{color:var(--ink);background:var(--card);border-color:var(--ink)}
+#progress li.now b{background:var(--yellow);color:var(--ink);border-color:var(--ink)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:1.6rem;align-items:start}
+aside.desk{position:sticky;top:1rem}
+#guide{padding:1rem 1rem 1.1rem}
+#guideArt{width:160px;margin:0 auto -6px}
+.bubble{position:relative;background:#fff;border:2.5px solid var(--ink);border-radius:var(--wob2);padding:.8em 1em;margin-top:.8rem;max-height:46vh;overflow:auto}
+.bubble::before{content:'';position:absolute;top:-14px;left:50%;margin-left:-10px;border:12px solid transparent;border-top:0;border-bottom-color:var(--ink)}
+.gbtns{display:flex;gap:.5rem;margin-top:.7rem}
+.gbtns .btn{flex:1;padding:.5em .6em;font-size:.9rem}
+.guidename{text-align:center;font-family:var(--hand);font-weight:700;font-size:1.2rem;margin:.1em 0 0}
+.score-badge{margin-top:.9rem;text-align:center;font-size:.9rem}
+.screen > h2{font-size:2.1rem}
+.panel{padding:1.3rem 1.5rem}
+
+/* welcome */
+.welcome-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:1.4rem}
+.big-name{font-size:1.4rem!important;padding:.7em .8em!important}
+fieldset{border:2px dashed var(--ink);border-radius:12px;margin:0 0 1rem;padding:.6rem .9rem .9rem}
+legend{font-weight:700;padding:0 .3em}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.check{display:flex;gap:.5em;align-items:center;font-weight:400;margin:.35em 0}
+.feature-list{list-style:none;padding:0;margin:.5rem 0 0;display:grid;gap:.55rem}
+.feature-list li{display:flex;gap:.7rem;align-items:flex-start}
+.feature-list .n{flex:none;font-family:var(--hand);font-weight:700;font-size:1.3rem;width:2rem;height:2rem;display:grid;place-items:center;border:2.5px solid var(--ink);border-radius:50%;background:var(--yellow)}
+
+/* choose */
+.choose-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+#presetGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem}
+.span2{grid-column:1/-1}
+details{margin:.6rem 0}
+summary{cursor:pointer;font-weight:700;padding:.3em 0}
+.nut{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .8rem;margin-top:.4rem}
+.nut label{font-size:.85rem}
+#photoWrap{border:2.5px dashed var(--ink);border-radius:14px;padding:1rem;text-align:center;background:#fff}
+#photoWrap.has{text-align:left}
+#photoPreview img{max-width:100%;max-height:300px;border:2px solid var(--ink);border-radius:8px;display:block;margin:.5rem auto}
+.filebtn{display:inline-block}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+.filebtn:focus-within .btn{outline:4px solid var(--blue);outline-offset:3px}
+#typeMsg,#photoMsg{font-weight:700;color:var(--verm)}
+
+/* lab */
+.lab-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.3rem;align-items:start}
+.stage{padding:.8rem}
+.lab-actions{display:flex;gap:.6rem;margin-top:.8rem}
+#labNext{flex:1;font-size:1.15rem}
+#card{padding:1rem 1.2rem;max-height:calc(100vh - 2rem);overflow:auto;position:sticky;top:1rem}
+.cgrid{grid-template-columns:1fr 1fr}
+.cgrid .wide{grid-column:1/-1}
+
+/* talk */
+.talk-box{max-width:820px;padding:1.3rem 1.5rem}
+
+/* kitchen */
+#recipe{padding:1.3rem 1.6rem}
+.rcols{display:grid;grid-template-columns:1fr 1.3fr;gap:1.5rem}
+
+/* future */
+#futureCtl{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;align-items:end;padding:1rem 1.3rem}
+#futureCtl output{font-family:var(--hand);font-weight:700;font-size:1.2rem}
+.people-box{margin-top:1.2rem;padding:.8rem 1rem}
+#people{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+#futureOut{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-top:1.2rem}
+.line-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.foot-actions{display:flex;gap:.8rem;margin-top:1.2rem;align-items:center;flex-wrap:wrap}
+
+/* finish */
+.finish-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:1.5rem;align-items:start}
+.tips li{margin:.3em 0}
+.phone-hint{display:none;margin:.6rem 0;padding:.5rem .8rem;border:2px dashed var(--ink);border-radius:10px;background:#fff6c9}
+@media (max-width:820px){.phone-hint{display:block}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header class="top">
+  <div class="brand">
+   <svg viewBox="0 0 60 60" aria-hidden="true"><g filter="url(#rough)" stroke="#1d2433" stroke-width="3" stroke-linejoin="round"><path d="M22 6H38M25 6V22L10 48Q7 55 15 55H45Q53 55 50 48L35 22V6" fill="#fff"/><path d="M16 40H44L49 49Q50 53 45 53H15Q10 53 11 49Z" fill="#E69F00"/><circle cx="26" cy="46" r="2.5" fill="#fff"/><circle cx="35" cy="43" r="1.8" fill="#fff"/></g></svg>
+   <div><h1>Ingredient <span>Lab</span></h1><p>Rebuild any packaged food, and see what's really inside.</p></div>
+  </div>
+  <div class="quick" role="group" aria-label="Quick settings">
+   <span class="lbl">Text size</span>
+   <button type="button" class="tog" data-pref="size" data-val="1" aria-label="Normal text">A</button>
+   <button type="button" class="tog" data-pref="size" data-val="2" aria-label="Large text" style="font-size:1.15em">A</button>
+   <button type="button" class="tog" data-pref="size" data-val="3" aria-label="Extra large text" style="font-size:1.35em">A</button>
+   <label class="check"><input type="checkbox" data-pref="voice"> Voice</label>
+   <label class="check"><input type="checkbox" data-pref="contrast"> High contrast</label>
+  </div>
+ </header>
+ <p class="phone-hint" id="phoneHint">On a small screen? There is a separate <a href="ingredient-lab-phone.html">phone version of the Ingredient Lab</a> made for touch screens.</p>
+
+ <ol id="progress" aria-label="Your journey">
+  <li><b>1</b>You</li><li><b>2</b>Product</li><li><b>3</b>Factory line</li><li><b>4</b>Mixing lab</li><li><b>5</b>Chat</li><li><b>6</b>Kitchen</li><li><b>7</b>Future</li><li><b>8</b>Badge</li>
+ </ol>
+
+ <div class="layout">
+  <main>
+   <!-- 1 WELCOME -->
+   <section class="screen" id="s-welcome" aria-labelledby="h-w">
+    <h2 id="h-w">Welcome to the Ingredient Lab</h2>
+    <div class="welcome-grid">
+     <form id="welcomeForm" class="paper panel">
+      <label for="nameInput">What should Professor Nimbu call you?</label>
+      <input id="nameInput" type="text" class="big-name" autocomplete="given-name" placeholder="Your name" maxlength="30">
+      <fieldset><legend>Voice</legend>
+       <label class="check"><input type="checkbox" data-pref="voice"> Professor Nimbu speaks out loud</label>
+       <label class="check"><input type="checkbox" data-pref="sound"> Little lab sounds</label>
+       <label for="rate">Speaking speed</label>
+       <div class="row"><span aria-hidden="true">🐢</span><input id="rate" type="range" min="0.6" max="1.3" step="0.1" data-pref="rate"><span aria-hidden="true">🐇</span></div>
+       <button type="button" class="btn ghost" id="testVoice">🔊 Test the voice</button>
+      </fieldset>
+      <fieldset><legend>Easy to see</legend>
+       <div class="row" role="group" aria-label="Text size"><span>Text size:</span>
+        <button type="button" class="tog" data-pref="size" data-val="1">Normal</button>
+        <button type="button" class="tog" data-pref="size" data-val="2">Large</button>
+        <button type="button" class="tog" data-pref="size" data-val="3">Extra large</button></div>
+       <label class="check"><input type="checkbox" data-pref="contrast"> High contrast</label>
+       <label class="check"><input type="checkbox" data-pref="motion"> Animations on</label>
+      </fieldset>
+      <label for="country">Where do you live? (for the "around the world" comparisons)</label>
+      <select id="country" data-pref="country">
+       <option value="IN">India</option><option value="US">USA</option><option value="UK">United Kingdom</option><option value="EU">European Union</option><option value="JP">Japan</option><option value="AU">Australia</option><option value="CA">Canada</option>
+      </select>
+      <p style="margin-top:1rem"><button class="btn" type="submit" style="font-size:1.2rem">Enter the lab ▶</button></p>
+     </form>
+     <div class="paper panel">
+      <h3>What happens here</h3>
+      <ul class="feature-list">
+       <li><span class="n">1</span><span><b>Read a real label.</b> Pick a product, type its ingredients, or upload a photo.</span></li>
+       <li><span class="n">2</span><span><b>Build it in the factory.</b> Pour each ingredient into the tank, in the right amount.</span></li>
+       <li><span class="n">3</span><span><b>Learn what each one does</b> in your body, and why countries like India, the USA and the EU have different rules.</span></li>
+       <li><span class="n">4</span><span><b>Answer quick quizzes</b> as you go.</span></li>
+       <li><span class="n">5</span><span><b>Make the natural version</b> in the kitchen.</span></li>
+       <li><span class="n">6</span><span><b>Travel in time</b> to see what eating it every day could do to the body and the planet.</span></li>
+      </ul>
+      <p class="small" style="margin-top:1rem">Made for every age. Colours always come with shapes, patterns and words, so you never need to tell colours apart.</p>
+     </div>
+    </div>
+   </section>
+
+   <!-- 2 CHOOSE -->
+   <section class="screen" id="s-choose" aria-labelledby="h-c">
+    <h2 id="h-c">What shall we make today?</h2>
+    <div class="choose-grid">
+     <div class="paper panel span2">
+      <h3>Pick a product</h3>
+      <div id="presetGrid"></div>
+     </div>
+     <form id="typeForm" class="paper panel">
+      <h3>…or type the label</h3>
+      <label for="prodName">Product name</label>
+      <input id="prodName" type="text" placeholder="e.g. Mango drink">
+      <label for="ingText" style="display:block;margin-top:.6rem">Ingredients, exactly as on the pack</label>
+      <textarea id="ingText" placeholder="Water, Sugar, Mango pulp (12%), Acidity regulator (330)…"></textarea>
+      <button type="button" class="btn ghost" id="exampleFill" style="margin-top:.5rem">Fill in an example</button>
+      <label for="catSelect" style="display:block;margin-top:.6rem">What kind of product is it?</label>
+      <select id="catSelect"></select>
+      <details><summary>From the nutrition table (optional)</summary>
+       <div class="nut">
+        <label>Serving size (g or ml)<input id="nServing" type="number" min="1" inputmode="decimal"></label>
+        <label>Calories per serving<input id="nKcal" type="number" min="0" inputmode="decimal"></label>
+        <label>Sugar per serving (g)<input id="nSugar" type="number" min="0" inputmode="decimal"></label>
+        <label>Sodium per serving (mg)<input id="nSodium" type="number" min="0" inputmode="decimal"></label>
+        <label>Saturated fat per serving (g)<input id="nSat" type="number" min="0" inputmode="decimal"></label>
+       </div>
+      </details>
+      <p id="typeMsg" aria-live="polite"></p>
+      <button class="btn" type="submit" style="font-size:1.1rem">Start the factory ▶</button>
+     </form>
+     <div class="paper panel">
+      <h3>…or upload a photo of the label</h3>
+      <div id="photoWrap">
+       <div id="photoPreview"></div>
+       <label class="filebtn"><input id="photoInput" type="file" accept="image/*"><span class="btn blue">📷 Choose a photo</span></label>
+       <p id="photoMsg" aria-live="polite"></p>
+       <p class="small">The photo stays on your device. If the words can't be read automatically, you can type them while looking at the photo.</p>
+      </div>
+     </div>
+    </div>
+   </section>
+
+   <!-- 3 FACTORY LINE -->
+   <section class="screen" id="s-line" aria-labelledby="h-li">
+    <h2 id="h-li">The factory line</h2>
+    <p id="lineTitle" class="small"></p>
+    <ol id="lineSteps" aria-label="Machines on the line"></ol>
+    <div class="paper stage"><div id="lineStage"></div></div>
+    <div class="line-grid">
+     <article id="lineFactory" class="paper linecard" aria-live="polite"></article>
+     <article id="lineHome" class="paper linecard" aria-live="polite"></article>
+    </div>
+    <div class="line-actions"><button type="button" class="btn ghost" id="linePrev">◀ Back</button><span id="lineCount"></span><button type="button" class="btn" id="lineNext">Next machine ▶</button></div>
+   </section>
+
+   <!-- 3 LAB -->
+   <section class="screen" id="s-lab" aria-labelledby="h-l">
+    <h2 id="h-l">The mixing lab</h2>
+    <div class="lab-grid">
+     <div>
+      <div class="paper stage"><div id="labStage"></div><ul id="strip" aria-label="Ingredients"></ul></div>
+      <div class="lab-actions"><button type="button" class="btn" id="labNext">Start ▶</button></div>
+     </div>
+     <article id="card" class="paper" aria-live="polite"></article>
+    </div>
+   </section>
+
+   <!-- 4 TALK -->
+   <section class="screen" id="s-talk" aria-labelledby="h-t">
+    <h2 id="h-t">A little chat</h2>
+    <div class="paper talk-box"><ul id="chat" aria-live="polite"></ul><div id="chatOpts"></div></div>
+   </section>
+
+   <!-- 5 KITCHEN -->
+   <section class="screen" id="s-kitchen" aria-labelledby="h-k">
+    <h2 id="h-k">The home kitchen</h2>
+    <article id="recipe" class="paper"></article>
+    <div class="foot-actions"><button type="button" class="btn blue" id="toFuture">Open the time machine ⏳</button></div>
+   </section>
+
+   <!-- 6 FUTURE -->
+   <section class="screen" id="s-future" aria-labelledby="h-f">
+    <h2 id="h-f">The time machine</h2>
+    <div id="futureCtl" class="paper">
+     <div><label for="fServ">How many servings a day? <output id="fServOut"></output></label><input id="fServ" type="range" min="0" max="5" step="1" value="1"></div>
+     <div><label for="fYears">For how long? <output id="fYearsOut"></output></label><input id="fYears" type="range" min="1" max="20" step="1" value="5"></div>
+     <div><label for="fWho">Who is eating it?</label><select id="fWho"><option value="adult">An adult</option><option value="child">A child</option><option value="older">An older adult</option></select></div>
+     <div><button type="button" class="btn blue" id="fPlay" style="width:100%">▶ Play the years</button></div>
+    </div>
+    <div class="paper people-box"><p class="yearnow" id="fYearNow" aria-live="polite"></p><div id="people"></div></div>
+    <div id="futureOut" aria-live="polite"></div><p class="disclaim small" id="futureNote" style="margin-top:1rem"></p>
+    <div class="foot-actions"><button type="button" class="btn" id="toFinish">Get my certificate 🏅</button></div>
+   </section>
+
+   <!-- 7 FINISH -->
+   <section class="screen" id="s-finish" aria-labelledby="h-z">
+    <h2 id="h-z">You did it!</h2>
+    <div class="finish-grid">
+     <div id="cert"></div>
+     <div class="paper panel">
+      <h3>Label detective tips</h3>
+      <ul class="tips">
+       <li>The <b>first three ingredients</b> are most of the product.</li>
+       <li>Sugar hides under many names: <i>syrup, glucose, dextrose, maltodextrin</i>.</li>
+       <li>A <b>number in brackets</b> (like 211) is an additive's INS / E-number.</li>
+       <li>"Fruit drink" is not the same as "fruit juice".</li>
+       <li>Shorter lists usually mean less processing.</li>
+      </ul>
+      <div class="foot-actions"><button type="button" class="btn" id="againBtn">Make another product ↺</button><button type="button" class="btn ghost" id="copyBtn">Copy my summary</button><span id="copyMsg" aria-live="polite"></span></div>
+     </div>
+    </div>
+   </section>
+  </main>
+
+  <aside class="desk" aria-label="Your guide">
+   <div id="guide" class="paper">
+    <div id="guideArt"></div>
+    <p class="guidename">Professor Nimbu</p>
+    <div class="bubble"><p id="guideText" aria-live="polite"></p></div>
+    <div class="gbtns"><button type="button" class="btn ghost repeatBtn">🔁 Say again</button><button type="button" class="btn ghost hushBtn">🤫 Quiet</button></div>
+    <p class="score-badge">Quiz score: <b class="scoreNow">0/0</b></p>
+   </div>
+  </aside>
+ </div>
+</div>
+<div id="modal"></div>
+<script>/* ===== INGREDIENT LAB — knowledge base =====
+   Status codes for country rules: ok = allowed, limit = allowed with limits,
+   warn = allowed but needs a warning label, ban = not allowed in food.        */
+const KINDS = {
+  base:   {label:'Main ingredient',            color:'#56B4E9', shape:'circle',  pat:'p-dots'},
+  sugar:  {label:'Sugar or sweetener',         color:'#E69F00', shape:'square',  pat:'p-cross'},
+  acid:   {label:'Acid / acidity regulator',   color:'#F0E442', shape:'diamond', pat:'p-diag'},
+  pres:   {label:'Preservative',               color:'#009E73', shape:'shield',  pat:'p-vert'},
+  colour: {label:'Colour',                     color:'#D55E00', shape:'drop',    pat:'p-zig'},
+  fat:    {label:'Fat or oil',                 color:'#CC79A7', shape:'oval',    pat:'p-horiz'},
+  flav:   {label:'Flavour or taste booster',   color:'#0072B2', shape:'star',    pat:'p-ring'},
+  thick:  {label:'Thickener, emulsifier or raising agent', color:'#9a9a9a', shape:'wave', pat:'p-wave'},
+  nutri:  {label:'Added nutrient',             color:'#ffffff', shape:'plus',    pat:'p-plus'}
+};
+const STATUS = {
+  ok:    {txt:'Allowed',               icon:'✓'},
+  limit: {txt:'Allowed, with limits',  icon:'≈'},
+  warn:  {txt:'Needs a warning label', icon:'!'},
+  ban:   {txt:'Not allowed in food',   icon:'✕'}
+};
+const REGIONS = {IN:'India', US:'USA', EU:'European Union', UK:'United Kingdom', JP:'Japan', AU:'Australia', CA:'Canada'};
+
+const ING = [
+/* ---------- MAIN INGREDIENTS ---------- */
+{id:'water', n:'Water', al:['water','purified water','treated water'], k:'base', liquid:true,
+ what:'Plain water — usually the biggest part of any drink.',
+ why:'It is cheap and it carries every other ingredient. Juice "from concentrate" is fruit juice with its water taken out at the farm and put back at the factory.',
+ body:'Water itself is perfect for your body. The question is always: what else is dissolved in it?',
+ world:[['IN','ok','Must meet drinking-water standards.'],['US','ok','Must meet drinking-water standards.']],
+ home:'Use clean drinking water — the same as the factory.',
+ q:['Why do factories add water back to juice concentrate?',['To make it sweeter','Because shipping thick concentrate is cheaper than shipping watery juice','To add vitamins'],1,'Removing water makes juice small and light to ship. The factory adds the water back near where it is sold.']},
+{id:'cwater', n:'Carbonated water', al:['carbonated water','soda water','carbonated'], k:'base', liquid:true,
+ what:'Water with carbon dioxide gas pushed into it under pressure — that is the fizz.',
+ why:'Bubbles make a drink feel "sharp" and refreshing, and they make sweetness feel less heavy.',
+ body:'The gas forms a weak acid (carbonic acid). Plain soda water is fine for most people; it can cause burping or bloating.',
+ world:[['IN','ok','Allowed everywhere.'],['EU','ok','Allowed everywhere.']],
+ home:'Plain soda water from a shop, or a soda maker at home.'},
+{id:'ojc', n:'Fruit juice / pulp', al:['orange juice concentrate','concentrated orange juice','orange juice from concentrate','reconstituted orange juice','orange juice','fruit juice concentrate','fruit juice','juice concentrate','fruit pulp','mango pulp','orange pulp'], k:'base', liquid:true,
+ what:'Fruit juice that has been boiled down so most of the water is gone.',
+ why:'It is cheaper to store and transport. The drink is then rebuilt with water, sugar and flavour.',
+ body:'Real fruit juice gives vitamin C and some minerals, but no fibre. Fibre is what slows sugar down in whole fruit.',
+ world:[['IN','limit','A "fruit drink" needs only about 10% juice under FSSAI standards (5% for lime/lemon).'],['EU','limit','"Fruit juice" must be 100% juice; "nectar" can have water and sugar added.'],['US','limit','Must say what % is juice if it claims to contain juice.']],
+ diff:'Countries choose different names for different juice amounts. A drink called a "fruit drink" can legally be mostly water and sugar.',
+ home:'Squeeze whole fruit, or better still, eat the whole fruit to keep the fibre.',
+ q:['A packaged "fruit drink" in India must contain at least about how much real juice?',['100%','50%','10%'],2,'Under FSSAI standards a fruit drink needs only around 10% juice. The rest is mostly water and sugar.']},
+{id:'tomato', n:'Tomato paste', al:['tomato paste','tomato concentrate','tomato puree','tomato pulp','tomatoes'], k:'base',
+ what:'Tomatoes cooked down until thick.',
+ why:'Gives colour, body and taste to sauces.',
+ body:'Tomatoes give lycopene (an antioxidant) and vitamin C. A good ingredient.',
+ world:[['IN','ok','Ketchup must contain a minimum amount of tomato solids.']],
+ home:'Cook fresh tomatoes down slowly in a pan.'},
+{id:'potato', n:'Potato', al:['potato','potatoes','potato slices','dehydrated potato','potato flakes'], k:'base',
+ what:'Thin potato slices or dried potato flakes.',
+ why:'The base of chips and many snacks.',
+ body:'Potatoes are fine food. Fried in oil and salted, they become very high in energy and salt. Frying at high heat also forms acrylamide, which regulators advise keeping low.',
+ world:[['EU','limit','EU law sets acrylamide "benchmark levels" for chips and fries.'],['IN','ok','Allowed.']],
+ diff:'The EU made rules to reduce acrylamide in fried foods in 2018; many countries only give advice.',
+ home:'Bake or air-fry potato slices with a spoon of oil.'},
+{id:'maida', n:'Refined wheat flour (maida)', al:['refined wheat flour','maida','wheat flour','refined flour','enriched flour','enriched wheat flour','flour'], k:'base',
+ what:'Wheat with the bran and germ removed, then ground fine.',
+ why:'Soft, white, long-lasting and cheap — perfect for factories.',
+ body:'Removing the bran takes away most of the fibre. It digests quickly and raises blood sugar faster than whole wheat.',
+ world:[['US','limit','Often "enriched": some B vitamins and iron added back by law.'],['UK','limit','Iron, calcium and some B vitamins must be added back to white flour.'],['IN','ok','Allowed; fortification is voluntary (with a +F logo).']],
+ diff:'Some countries force mills to add back nutrients lost in refining; others leave it voluntary.',
+ home:'Whole wheat atta, oats, or millet flour (ragi, jowar).',
+ q:['What is removed from wheat to make maida?',['The bran and germ (where most fibre is)','The water','The sugar'],0,'Taking off the bran and germ makes flour white and soft, but removes most of its fibre.']},
+{id:'gluten', n:'Wheat gluten', al:['wheat gluten','gluten'], k:'base',
+ what:'The stretchy protein in wheat.', why:'Makes noodles and bread chewy and strong.',
+ body:'Fine for most people. People with coeliac disease must avoid it.',
+ world:[['EU','warn','Must be highlighted as an allergen on the label.'],['IN','warn','Must be declared as an allergen.']],
+ home:'Whole wheat flour already contains gluten.'},
+{id:'milk', n:'Milk solids', al:['milk solids','milk powder','skimmed milk powder','milk','whey','whole milk powder','milk solids (0.5%)'], k:'base',
+ what:'Milk with the water dried off.', why:'Adds creamy taste and body.',
+ body:'Gives protein and calcium. An allergen for some people.',
+ world:[['EU','warn','Must be highlighted as an allergen.'],['IN','warn','Must be declared as an allergen.']],
+ home:'Fresh milk or curd.'},
+{id:'cocoa', n:'Cocoa solids', al:['cocoa solids','cocoa','cocoa powder','cocoa mass'], k:'base',
+ what:'Ground cocoa beans with some fat removed.', why:'Chocolate taste and brown colour.',
+ body:'Cocoa has useful plant compounds (flavanols), but in biscuits and spreads it comes with a lot of sugar and fat.',
+ world:[['IN','ok','Allowed.']],
+ home:'Unsweetened cocoa powder with dates for sweetness.'},
+{id:'spice', n:'Spices & condiments', al:['spices','spices and condiments','spices & condiments','condiments','chilli','chili','red chilli','turmeric','coriander','cumin','black pepper','pepper','spice mix','masala','seasoning','dehydrated vegetables','onion powder','garlic powder','onion','garlic','ginger'], k:'base',
+ what:'Ground spices, herbs and dried vegetables.', why:'Real flavour and colour.',
+ body:'Spices are generally good for you; the problem in snack seasonings is the large amount of salt mixed in.',
+ world:[['IN','ok','Allowed.']],
+ home:'Your own masala box: turmeric, cumin, coriander, chilli, garlic.'},
+{id:'gelatin', n:'Gelatine', al:['gelatin','gelatine'], k:'thick',
+ what:'A protein made from animal skin and bones.', why:'Makes sweets chewy and wobbly.',
+ body:'Safe to eat, but not vegetarian. In India, food with gelatine from animals must carry the brown (non-veg) dot.',
+ world:[['IN','warn','Needs the brown non-vegetarian symbol.'],['EU','ok','Allowed.']],
+ diff:'India uses green and brown dots so vegetarians can choose easily; most countries do not.',
+ home:'Agar-agar (from seaweed) sets fruit jellies the vegetarian way.',
+ q:['In India, what does a brown dot on a sweet packet tell you?',['It is spicy','It contains non-vegetarian ingredients, like animal gelatine','It is sugar-free'],1,'India marks food with green (veg) and brown (non-veg) symbols. Animal gelatine needs the brown one.']},
+
+/* ---------- SUGARS & SWEETENERS ---------- */
+{id:'sugar', n:'Sugar', al:['sugar','sucrose','cane sugar','added sugar','white sugar'], k:'sugar',
+ what:'Table sugar from sugarcane or sugar beet.',
+ why:'Sweetness people love, and it is cheap. It also helps keep products from spoiling.',
+ body:'Sugar gives fast energy but no vitamins or fibre. Too much over time raises the risk of weight gain, type 2 diabetes, tooth decay and heart disease. WHO advises keeping free sugars under 10% of daily energy, ideally under 5% (about 6 teaspoons).',
+ world:[['IN','ok','FSSAI is moving to show added sugar clearly on the front of packs.'],['UK','limit','Sugary drinks pay a "sugar tax" (since 2018).'],['US','ok','"Added sugars" must be listed on the nutrition label.']],
+ diff:'Countries with sugar taxes — like the UK and Mexico — saw companies cut the sugar in their drinks.',
+ home:'Use less, or sweeten with whole fruit (banana, dates) that brings fibre along.',
+ q:['About how many teaspoons of free sugar a day does WHO call the ideal limit for an adult?',['About 6','About 20','About 40'],0,'WHO says under 10% of energy, ideally under 5% — that is around 25 g, or about 6 teaspoons.']},
+{id:'hfcs', n:'High fructose corn syrup', al:['high fructose corn syrup','hfcs','glucose-fructose syrup','fructose-glucose syrup','isoglucose','corn syrup'], k:'sugar', liquid:true,
+ what:'A liquid sugar made from corn starch.', why:'Cheap, liquid, and easy to pump into drinks.',
+ body:'Your body treats it much like table sugar. The concern is the total amount of added sugar, not this one type.',
+ world:[['US','ok','Very common — corn is cheap and supported by farm subsidies.'],['EU','ok','Allowed, but less used; production was capped by sugar quotas until 2017.'],['IN','ok','Allowed, but cane sugar is cheaper here so it is rarely used.']],
+ diff:'Each country uses the sweetener its own farms grow cheaply: corn in the USA, cane in India and Brazil, beet in Europe.',
+ home:'No need — a ripe fruit is sweet enough.',
+ q:['Why is corn syrup common in the USA but cane sugar common in India?',['Corn syrup is healthier','Each country uses the sugar its own farms make cheaply','India bans corn'],1,'It is mostly money: US corn is cheap, Indian cane sugar is cheap.']},
+{id:'glucose', n:'Glucose syrup / liquid glucose', al:['glucose syrup','liquid glucose','glucose','dextrose'], k:'sugar', liquid:true,
+ what:'A sugar syrup made by breaking down starch.', why:'Keeps sweets soft and stops sugar crystals forming.',
+ body:'Absorbed very fast and raises blood sugar quickly. Count it as added sugar.',
+ world:[['IN','ok','Allowed.'],['EU','ok','Allowed.']],
+ home:'Dates or jaggery in small amounts.'},
+{id:'invert', n:'Invert sugar syrup', al:['invert sugar syrup','invert syrup','invert sugar','golden syrup'], k:'sugar', liquid:true,
+ what:'Sugar split into glucose and fructose with heat and acid.', why:'Keeps biscuits moist and soft and browns nicely.',
+ body:'It is still added sugar.', world:[['IN','ok','Allowed.']], home:'A spoon of honey or mashed banana.'},
+{id:'maltodextrin', n:'Maltodextrin', al:['maltodextrin'], k:'sugar',
+ what:'A white powder made from starch.', why:'Adds bulk and smooth texture cheaply.',
+ body:'It raises blood sugar very quickly — even faster than table sugar.', world:[['IN','ok','Allowed.'],['US','ok','Allowed.']],
+ home:'Not needed at home.'},
+{id:'aspartame', n:'Aspartame', al:['aspartame'], codes:['951'], k:'sugar', pct:0.05,
+ what:'An artificial sweetener about 200 times sweeter than sugar.', why:'Sweetness with almost no calories ("diet" drinks).',
+ body:'In 2023 the WHO cancer agency (IARC) called it "possibly carcinogenic" (the weakest category), while the WHO/FAO food-additive committee kept the safe daily limit at 40 mg per kg of body weight. People with PKU must avoid it.',
+ world:[['IN','warn','Label must say it contains phenylalanine and is not for people with PKU.'],['EU','warn','Must carry "contains a source of phenylalanine".'],['US','ok','Allowed; PKU statement required.']],
+ home:'Get used to less sweetness — taste buds adjust in a few weeks.',
+ q:['Who must avoid aspartame completely?',['People with PKU, a condition where the body cannot break down phenylalanine','Everyone over 60','Children under 12 only'],0,'Aspartame contains phenylalanine, which people with PKU cannot process.']},
+{id:'sucralose', n:'Sucralose', al:['sucralose'], codes:['955'], k:'sugar', pct:0.02,
+ what:'A sweetener made from sugar, about 600 times sweeter.', why:'Zero-calorie sweetness that survives cooking.',
+ body:'Approved as safe within daily limits. WHO (2023) advises not to rely on sweeteners for weight control.',
+ world:[['IN','ok','Allowed with limits.'],['EU','ok','Allowed with limits.']], home:'Less sweetness, or fruit.'},
+{id:'acek', n:'Acesulfame potassium', al:['acesulfame potassium','acesulfame k','acesulfame-k'], codes:['950'], k:'sugar', pct:0.02,
+ what:'A calorie-free sweetener, often mixed with others.', why:'Blending sweeteners hides their aftertaste.',
+ body:'Approved within daily limits.', world:[['IN','ok','Allowed with limits.'],['US','ok','Allowed.']], home:'Fruit for sweetness.'},
+{id:'stevia', n:'Steviol glycosides (stevia)', al:['stevia','steviol glycosides','stevioside'], codes:['960'], k:'sugar', pct:0.03,
+ what:'Sweet compounds from the leaves of the stevia plant.', why:'Plant-based, zero-calorie sweetness.',
+ body:'Approved within daily limits. Some people notice a bitter aftertaste.', world:[['IN','ok','Allowed.'],['EU','ok','Allowed (purified extracts).']], home:'Fresh stevia leaves can be grown in a pot.'},
+
+/* ---------- ACIDS & REGULATORS ---------- */
+{id:'citric', n:'Citric acid', al:['citric acid','acidity regulator','acidulant'], codes:['330'], k:'acid', pct:0.3,
+ what:'The sour acid found in lemons. Factories make it by feeding sugar to a mould (Aspergillus niger).',
+ why:'Gives a fresh sour taste, balances sweetness, and helps preservatives work.',
+ body:'Safe in normal amounts. Sour, acidic drinks sipped often can wear away tooth enamel.',
+ world:[['IN','ok','Allowed.'],['EU','ok','Allowed with no fixed limit.'],['US','ok','Generally recognised as safe.']],
+ home:'A squeeze of fresh lemon.',
+ q:['Factories mostly make citric acid using…',['Squeezed lemons','A mould fed with sugar','Petrol'],1,'Almost all citric acid today is made by a mould called Aspergillus niger.']},
+{id:'phosphoric', n:'Phosphoric acid', al:['phosphoric acid'], codes:['338'], k:'acid', pct:0.06,
+ what:'A strong mineral acid.', why:'Gives colas their sharp bite.',
+ body:'Very acidic, so frequent sipping can wear tooth enamel. One large study (Framingham) linked regular cola drinking with lower hip bone density in women.',
+ world:[['IN','ok','Allowed with limits.'],['EU','limit','Allowed with limits.']],
+ home:'Lemon juice gives sourness without it.',
+ q:['Which drink usually contains phosphoric acid?',['Cola','Fresh orange juice','Coconut water'],0,'Phosphoric acid gives colas their sharp taste.']},
+{id:'acetic', n:'Vinegar / acetic acid', al:['vinegar','acetic acid','synthetic vinegar'], codes:['260'], k:'acid', pct:2, liquid:true,
+ what:'The sour acid in vinegar.', why:'Sour taste, and helps stop germs growing in sauces.',
+ body:'Safe in food amounts.', world:[['IN','ok','Allowed.']], home:'Plain vinegar or lemon juice.'},
+{id:'scitrate', n:'Sodium citrate', al:['sodium citrate','trisodium citrate'], codes:['331'], k:'acid', pct:0.1,
+ what:'A salt of citric acid.', why:'Keeps sourness steady.', body:'Safe; adds a little sodium.', world:[['IN','ok','Allowed.']], home:'Not needed at home.'},
+{id:'carbonates', n:'Sodium / potassium carbonate', al:['sodium carbonate','potassium carbonate','kansui'], codes:['500','501'], k:'acid', pct:0.3,
+ what:'Alkaline salts (the opposite of acids).', why:'Give instant noodles their springy, yellowish texture.',
+ body:'Safe in food amounts; adds a little sodium.', world:[['IN','ok','Allowed.'],['JP','ok','Traditional in ramen ("kansui").']], home:'Not needed for home noodles.'},
+
+/* ---------- PRESERVATIVES ---------- */
+{id:'benzoate', n:'Sodium benzoate', al:['sodium benzoate','benzoate'], codes:['211'], k:'pres', pct:0.015,
+ what:'A preservative that stops moulds and yeasts.', why:'Lets an opened drink or sauce last for weeks.',
+ body:'Safe within limits for most people. Mixed with vitamin C, heat and light, it can form tiny amounts of benzene — companies changed recipes after US tests in 2006. A 2007 UK study (Southampton) linked a mix of colours plus sodium benzoate with hyperactivity in some children.',
+ world:[['IN','limit','Allowed up to set limits per food.'],['EU','limit','Allowed up to set limits.'],['US','limit','Allowed up to 0.1%.']],
+ diff:'Most countries allow it; they set different maximum amounts depending on the food.',
+ home:'Make fresh, keep it cold, finish it within a day or two.',
+ q:['Sodium benzoate plus vitamin C, in heat and light, can form tiny amounts of…',['Benzene','Salt','Protein'],0,'That is why companies changed recipes after tests in 2006 — keep drinks cool and out of sunlight.']},
+{id:'sorbate', n:'Potassium sorbate', al:['potassium sorbate','sorbic acid','sorbate'], codes:['202','200'], k:'pres', pct:0.03,
+ what:'A preservative against moulds and yeasts.', why:'Longer shelf life.',
+ body:'One of the best-tolerated preservatives.', world:[['IN','limit','Allowed with limits.'],['EU','limit','Allowed with limits.']], home:'Fridge + small batches.'},
+{id:'sulphite', n:'Sulphites (sodium metabisulphite)', al:['sodium metabisulphite','sodium metabisulfite','potassium metabisulphite','sulphur dioxide','sulfur dioxide','sulphite','sulfite','kms'], codes:['223','224','220'], k:'pres', pct:0.02,
+ what:'Preservatives that release sulphur dioxide.', why:'Stop browning and germs in juices, squashes and dried fruit.',
+ body:'Can trigger breathing problems in some people with asthma.',
+ world:[['US','limit','Banned on fresh fruit and vegetables since 1986; must be declared above 10 ppm.'],['EU','warn','Must be highlighted as an allergen above 10 mg/kg.'],['IN','limit','Allowed with limits.']],
+ home:'Fresh juice drunk straight away needs nothing.'},
+{id:'tbhq', n:'TBHQ', al:['tbhq','tertiary butylhydroquinone','tert-butylhydroquinone'], codes:['319'], k:'pres', pct:0.01,
+ what:'An antioxidant made from petroleum.', why:'Stops frying oil going rancid in noodles and snacks.',
+ body:'Considered safe within limits by most regulators.',
+ world:[['IN','limit','Allowed with limits.'],['US','limit','Up to 0.02% of the fat.'],['EU','limit','Allowed with limits.'],['JP','ban','Not on Japan’s approved additive list.']],
+ diff:'Each country keeps its own approved list. A company may simply never ask a country to approve an additive.',
+ home:'Fresh oil, small batches.'},
+{id:'bha', n:'BHA', al:['bha','butylated hydroxyanisole'], codes:['320'], k:'pres', pct:0.01,
+ what:'An antioxidant for fats.', why:'Stops oils and fats going stale.',
+ body:'The WHO cancer agency lists it as "possibly carcinogenic" based on animal studies; regulators still allow small amounts.',
+ world:[['US','limit','Allowed in small amounts.'],['EU','limit','Allowed with strict limits.'],['IN','limit','Allowed with limits.']], home:'Fresh food, eaten soon.'},
+{id:'nitrite', n:'Sodium nitrite', al:['sodium nitrite','nitrite'], codes:['250'], k:'pres', pct:0.015,
+ what:'A curing salt for processed meat.', why:'Pink colour, flavour, and protection from deadly botulism germs.',
+ body:'Processed meat is classed by WHO’s cancer agency as a cause of bowel cancer; nitrites are part of the reason.',
+ world:[['EU','limit','Limits were lowered in 2023.'],['US','limit','Allowed with limits.']], home:'Fresh, unprocessed meat or beans.'},
+
+/* ---------- COLOURS ---------- */
+{id:'tio2', n:'Titanium dioxide', al:['titanium dioxide'], codes:['171'], k:'colour', pct:0.3,
+ what:'A white metal oxide powder.', why:'Makes sweets, icing and chewing gum bright, solid white.',
+ body:'In 2021 the EU food safety authority said it could no longer be considered safe as a food additive, because damage to DNA from tiny particles could not be ruled out.',
+ world:[['EU','ban','Banned as a food additive since 2022.'],['US','limit','Allowed up to 1% of the food.'],['IN','limit','Permitted in some foods (like sweets) within limits.'],['UK','limit','Still allowed; under review.']],
+ diff:'Regulators read the same science differently. The EU uses the "precautionary principle": if harm cannot be ruled out, ban it. The USA and India want stronger proof of harm before removing an additive.',
+ home:'Food does not need to be white. Coconut or rice flour gives natural paleness.',
+ q:['Why was titanium dioxide banned in the EU but not in India or the USA?',['It tastes bad','The EU bans an additive when harm cannot be ruled out; others wait for stronger proof','India makes it'],1,'This is the "precautionary principle" — the EU acts first when the science is uncertain.']},
+{id:'sunset', n:'Sunset Yellow FCF', al:['sunset yellow','sunset yellow fcf','yellow 6','fd&c yellow 6'], codes:['110'], k:'colour', pct:0.005,
+ what:'An orange-yellow synthetic colour.', why:'Makes drinks and sweets look like "more fruit" than they have.',
+ body:'In the 2007 Southampton study, mixes including this colour were linked with more hyperactivity in some children.',
+ world:[['EU','warn','Label must say: "may have an adverse effect on activity and attention in children".'],['IN','limit','Allowed up to set limits (often 100 ppm).'],['US','ok','Allowed as Yellow 6, no warning.']],
+ diff:'After the Southampton study, the EU added a warning label (2010). Many companies then removed these colours in Europe but kept them elsewhere.',
+ home:'The colour of real fruit — mango, orange, turmeric, saffron.',
+ q:['In Europe, what must a label say if it uses Sunset Yellow?',['"Contains fruit"','"May have an adverse effect on activity and attention in children"','Nothing'],1,'The EU added this warning in 2010 after the Southampton study.']},
+{id:'tartrazine', n:'Tartrazine', al:['tartrazine','yellow 5','fd&c yellow 5'], codes:['102'], k:'colour', pct:0.005,
+ what:'A lemon-yellow synthetic colour.', why:'Bright yellow sweets, drinks and snacks.',
+ body:'Part of the Southampton colour mix linked with hyperactivity in some children. A small number of people are sensitive to it (itchy skin, hives).',
+ world:[['EU','warn','Needs the children’s activity warning.'],['IN','limit','Allowed within limits.'],['US','ok','Allowed as Yellow 5; must be named on the label.']],
+ home:'Turmeric or saffron.'},
+{id:'allura', n:'Allura Red', al:['allura red','red 40','fd&c red 40'], codes:['129'], k:'colour', pct:0.005,
+ what:'A red synthetic colour.', why:'Red sweets, drinks and jellies.',
+ body:'Part of the Southampton colour mix.',
+ world:[['EU','warn','Needs the children’s activity warning.'],['US','ok','Allowed as Red 40 (some US states are moving to restrict it in school food).'],['IN','limit','Allowed within limits.']], home:'Beetroot, pomegranate.'},
+{id:'carmoisine', n:'Carmoisine', al:['carmoisine','azorubine'], codes:['122'], k:'colour', pct:0.005,
+ what:'A red synthetic colour.', why:'Red-pink sweets and drinks.', body:'Part of the Southampton colour mix.',
+ world:[['IN','limit','Allowed within limits.'],['EU','warn','Needs the children’s activity warning.'],['US','ban','Not an approved colour.']],
+ diff:'The USA has a short list of approved synthetic colours; carmoisine was never approved there.', home:'Beetroot or rose petals.'},
+{id:'ponceau', n:'Ponceau 4R', al:['ponceau 4r','ponceau'], codes:['124'], k:'colour', pct:0.005,
+ what:'A strawberry-red synthetic colour.', why:'Red sweets and drinks.', body:'Part of the Southampton colour mix.',
+ world:[['IN','limit','Allowed within limits.'],['EU','warn','Needs the children’s activity warning.'],['US','ban','Not an approved colour.']], home:'Beetroot or berries.'},
+{id:'erythrosine', n:'Erythrosine (Red 3)', al:['erythrosine','erythrosin','red 3','fd&c red 3'], codes:['127'], k:'colour', pct:0.005,
+ what:'A cherry-pink synthetic colour.', why:'Pink sweets and cake decorations.',
+ body:'High doses caused thyroid tumours in male rats, which led the US FDA to remove it from food in 2025.',
+ world:[['US','ban','FDA revoked approval in January 2025 (food makers have until 2027).'],['EU','limit','Only allowed in cocktail and candied cherries.'],['IN','limit','Allowed in some foods within limits.']],
+ home:'Beetroot juice for pink.'},
+{id:'blue', n:'Brilliant Blue FCF', al:['brilliant blue','brilliant blue fcf','blue 1','fd&c blue 1'], codes:['133'], k:'colour', pct:0.003,
+ what:'A blue synthetic colour.', why:'Blue and green sweets and drinks.', body:'Considered safe within limits.',
+ world:[['IN','limit','Allowed within limits.'],['EU','limit','Allowed within limits.'],['US','ok','Allowed as Blue 1.']], home:'Butterfly pea flower (aparajita) tea.'},
+{id:'caramel', n:'Caramel colour', al:['caramel colour','caramel color','caramel','class iv caramel','caramel colour (150d)'], codes:['150d','150c','150a','150'], k:'colour', pct:0.1, liquid:true,
+ what:'Brown colour made by heating sugar, sometimes with ammonia and sulphites (class IV).', why:'The brown of colas and sauces.',
+ body:'Class IV caramel can contain a by-product called 4-MEI. After California listed 4-MEI as a possible carcinogen, cola makers lowered it.',
+ world:[['US','warn','California requires a warning above set 4-MEI levels.'],['EU','limit','Allowed with limits on 4-MEI.'],['IN','ok','Allowed.']],
+ diff:'One state (California) set a stricter rule than its country, and companies changed their recipe for everyone.',
+ home:'Not needed. Real food has its own colour.'},
+{id:'colourgen', n:'Added colour', al:['permitted synthetic food colour','synthetic food colour','food colour','colour','color','permitted food colour'], k:'colour', pct:0.005,
+ what:'A colour added to make food look brighter.', why:'We "eat with our eyes" — bright colours sell.',
+ body:'Look at the number (INS/E number) after the word "colour" to know which one it is.',
+ world:[['IN','limit','Only permitted colours, within limits.'],['EU','limit','Some need a children’s activity warning.']], home:'Turmeric, beetroot, spinach, saffron.'},
+
+/* ---------- FATS & OILS ---------- */
+{id:'palm', n:'Palm oil / palmolein', al:['palm oil','palmolein','refined palmolein','palmolein oil','edible vegetable oil','vegetable oil','refined vegetable oil','edible vegetable oil (palmolein)'], k:'fat',
+ what:'Oil from the fruit of the oil palm.', why:'Cheap, stays solid-ish, does not go stale fast, and makes snacks crispy.',
+ body:'About half of palm oil is saturated fat. Too much saturated fat raises "bad" LDL cholesterol, a risk for heart disease.',
+ world:[['IN','ok','India is one of the world’s largest palm oil importers.'],['EU','limit','From 2025 the EU deforestation law requires proof palm oil did not come from cleared forest.']],
+ diff:'Palm oil is the cheapest vegetable oil in the world, so poorer markets and big snack makers use more of it. Europe worries most about forests and orangutans.',
+ home:'A little groundnut, mustard or rice bran oil — or bake instead of fry.',
+ q:['About how much of palm oil is saturated fat?',['Almost none','About half','All of it'],1,'Roughly 50% — that is why it stays semi-solid and why too much is hard on the heart.']},
+{id:'hydrog', n:'Hydrogenated vegetable fat', al:['hydrogenated vegetable oil','hydrogenated vegetable fat','partially hydrogenated','vanaspati','shortening','interesterified vegetable fat','hydrogenated fat'], k:'fat',
+ what:'Liquid oil turned solid by adding hydrogen.', why:'Crispy, flaky, long-lasting — and cheap.',
+ body:'Partial hydrogenation makes trans fats, the worst fat for the heart. Even small daily amounts raise heart disease risk.',
+ world:[['IN','limit','Trans fat limited to 2% of fats since January 2022.'],['US','ban','Partially hydrogenated oils banned (from 2018).'],['EU','limit','Trans fat limited to 2 g per 100 g of fat since 2021.']],
+ diff:'Countries acted at different speeds once science showed trans fat is harmful; WHO wants it removed worldwide.',
+ home:'A little ghee or butter at home, or cold-pressed oils.',
+ q:['What harmful fat can partly hydrogenated oil contain?',['Omega-3','Trans fat','Fibre'],1,'Trans fat raises bad cholesterol and lowers good cholesterol.']},
+{id:'cocoabutter', n:'Cocoa butter', al:['cocoa butter'], k:'fat', what:'The natural fat of cocoa beans.', why:'Melts in your mouth.', body:'High in saturated fat, but a natural ingredient.', world:[['EU','limit','Chocolate rules limit swapping it for other fats.']], home:'Real dark chocolate in small pieces.'},
+{id:'bvo', n:'Brominated vegetable oil', al:['brominated vegetable oil','bvo'], k:'fat', pct:0.0015,
+ what:'Vegetable oil with bromine attached.', why:'Kept citrus flavour from floating to the top of drinks.',
+ body:'Bromine can build up in the body; it was linked to headaches and skin problems at very high intakes.',
+ world:[['US','ban','FDA revoked approval in 2024.'],['EU','ban','Not allowed.'],['IN','ban','Not on India’s permitted list.']],
+ home:'Shake the bottle!'},
+
+/* ---------- FLAVOURS & ENHANCERS ---------- */
+{id:'salt', n:'Salt', al:['salt','iodised salt','iodized salt','sodium chloride','common salt','edible common salt'], k:'flav', pct:1.5,
+ what:'Sodium chloride.', why:'Makes food taste stronger and helps preserve it.',
+ body:'Our bodies need a little. Too much raises blood pressure, a top cause of stroke and heart disease. WHO advises under 5 g of salt a day (one teaspoon) for adults.',
+ world:[['UK','limit','Voluntary salt-reduction targets cut UK salt intake.'],['IN','ok','Iodised salt helps prevent goitre.']],
+ home:'A pinch, with lemon, herbs and spices for flavour.',
+ q:['WHO advises an adult to eat less than how much salt a day?',['About 1 teaspoon (5 g)','About 4 teaspoons','No limit'],0,'Under 5 g a day — and most of our salt comes from packaged food.']},
+{id:'msg', n:'Monosodium glutamate (MSG)', al:['monosodium glutamate','msg','flavour enhancer','flavor enhancer'], codes:['621'], k:'flav', pct:0.6,
+ what:'The sodium salt of glutamate — the "umami" taste also found in tomatoes and cheese.', why:'Makes snacks taste savoury and moreish.',
+ body:'Large reviews find it safe in normal food amounts. The idea of "Chinese restaurant syndrome" has not held up in careful studies. It does add sodium.',
+ world:[['IN','warn','Label must say it contains added MSG and is not recommended for infants under 12 months.'],['US','ok','Generally recognised as safe; must be named.'],['EU','limit','Allowed with limits.']],
+ diff:'India chose an extra warning for babies; other countries just require it to be named.',
+ home:'Tomatoes, mushrooms and a little cheese give natural umami.',
+ q:['MSG gives which taste?',['Sour','Umami (savoury)','Bitter'],1,'Umami — the same savoury taste found in tomatoes, mushrooms and cheese.']},
+{id:'ribo', n:'Disodium inosinate & guanylate', al:['disodium inosinate','disodium guanylate','disodium 5\'-ribonucleotides','ribonucleotides'], codes:['627','631','635'], k:'flav', pct:0.05,
+ what:'Taste boosters that make MSG even stronger.', why:'A tiny amount doubles savoury taste.',
+ body:'Safe in food amounts. People with gout are sometimes advised to limit them.', world:[['IN','limit','Allowed with limits.'],['EU','limit','Allowed.']], home:'Mushrooms, dried fish or tomatoes.'},
+{id:'flavour', n:'Flavouring substances', al:['natural flavour','natural flavours','natural flavor','natural flavors','nature identical flavouring substances','nature-identical flavouring','added flavour','added flavor','artificial flavour','artificial flavouring','artificial flavouring substances','flavouring','flavourings','flavours','flavour','flavor','permitted natural flavour','vanillin','vanilla flavour'], k:'flav', pct:0.1,
+ what:'A secret mix of aroma chemicals.', why:'Makes a little fruit taste like a lot of fruit, or replaces it completely.',
+ body:'Approved flavourings are tested for safety. But they can make a low-fruit drink taste "fruity".',
+ world:[['IN','limit','Must say natural, nature-identical or artificial.'],['US','ok','"Natural flavour" can mean a mix of many chemicals from natural sources.'],['EU','limit','"Natural" only if the flavour comes from that named fruit or food.']],
+ diff:'The word "natural" means different things in different countries.',
+ home:'Real fruit, zest, vanilla pod, cardamom.',
+ q:['What can flavouring do in a fruit drink with only a little real fruit?',['Make it taste like lots of fruit','Add fibre','Remove sugar'],0,'That is why flavourings are so useful to factories.']},
+{id:'caffeine', n:'Caffeine', al:['caffeine'], k:'flav', pct:0.01,
+ what:'A natural stimulant from coffee, tea and kola nuts.', why:'A small "lift" — and it makes people want more.',
+ body:'Moderate amounts are fine for most adults. Children are more sensitive (sleep, heartbeat). Pregnant women are advised to limit it.',
+ world:[['IN','warn','Drinks with added caffeine must say so and are not for children or pregnant women.'],['EU','warn','"High caffeine content" warning above 150 mg/L.']], home:'Herbal tea, or none.'},
+{id:'protein', n:'Hydrolysed vegetable protein', al:['hydrolysed vegetable protein','hydrolyzed vegetable protein','hydrolysed groundnut protein','yeast extract'], k:'flav', pct:0.5,
+ what:'Plant protein broken down to make a savoury flavour.', why:'Meaty, savoury taste without meat.', body:'Contains natural glutamate (like MSG) and salt.', world:[['IN','ok','Allowed; source must be declared for allergens.']], home:'Mushroom or vegetable stock.'},
+
+/* ---------- THICKENERS, EMULSIFIERS, RAISING ---------- */
+{id:'pectin', n:'Pectin', al:['pectin','stabiliser','stabilizer'], codes:['440'], k:'thick', pct:0.15,
+ what:'A natural fibre from fruit peel.', why:'Gives juice drinks a fuller "body" so they feel juicier.', body:'Safe — it is a kind of soluble fibre.', world:[['IN','ok','Allowed.'],['EU','ok','Allowed.']], home:'Keep the fruit pulp.'},
+{id:'guar', n:'Guar gum', al:['guar gum','thickener','gum'], codes:['412'], k:'thick', pct:0.3,
+ what:'A fibre from guar beans — mostly grown in Rajasthan, India!', why:'Thickens and binds noodles, sauces and ice cream.',
+ body:'Safe; a soluble fibre.', world:[['IN','ok','Allowed. India grows most of the world’s guar.'],['EU','ok','Allowed.']], home:'Not needed.'},
+{id:'xanthan', n:'Xanthan gum', al:['xanthan gum','xanthan'], codes:['415'], k:'thick', pct:0.2, what:'A thickener made by bacteria fermenting sugar.', why:'Keeps sauces thick and evenly mixed.', body:'Safe in food amounts.', world:[['IN','ok','Allowed.']], home:'Cook sauces down to thicken.'},
+{id:'starch', n:'Modified starch', al:['modified starch','modified food starch','thickener (modified starch)','starch','corn starch','maize starch'], codes:['1422','1442','1412','1404','1450'], k:'thick', pct:1.5,
+ what:'Starch changed with heat or chemicals to behave better.', why:'Keeps sauces thick through heating and freezing.', body:'Safe; "modified" does not mean genetically modified.', world:[['IN','ok','Allowed.']], home:'Cook it down, or use a little cornflour.'},
+{id:'carrageenan', n:'Carrageenan', al:['carrageenan'], codes:['407'], k:'thick', pct:0.05, what:'A thickener from red seaweed.', why:'Smooth texture in milky drinks and desserts.', body:'Approved; some scientists want more research on gut effects.', world:[['EU','ban','Not allowed in infant formula.'],['US','ok','Allowed.'],['IN','ok','Allowed.']], home:'Not needed.'},
+{id:'cmc', n:'Carboxymethyl cellulose', al:['carboxymethyl cellulose','sodium carboxymethyl cellulose','cmc','cellulose gum'], codes:['466'], k:'thick', pct:0.1, what:'Plant cellulose changed to thicken.', why:'Smooth texture.', body:'Approved; some studies in mice suggest emulsifiers may affect gut bacteria. Research continues.', world:[['IN','ok','Allowed.']], home:'Not needed.'},
+{id:'lecithin', n:'Soy lecithin', al:['soy lecithin','soya lecithin','lecithin','emulsifier','emulsifiers'], codes:['322'], k:'thick', pct:0.3,
+ what:'A natural emulsifier from soybeans.', why:'Helps oil and water mix smoothly.', body:'Safe. Soy is an allergen for some people.', world:[['IN','ok','Allowed.'],['EU','ok','Allowed.']], home:'Egg yolk does the same job.'},
+{id:'monodi', n:'Mono- and diglycerides', al:['mono- and diglycerides','mono and diglycerides','mono and di-glycerides of fatty acids','mono- and diglycerides of fatty acids'], codes:['471'], k:'thick', pct:0.3, what:'Emulsifiers made from fats.', why:'Soft texture, longer freshness.', body:'Approved; can contain tiny traces of trans fat.', world:[['IN','ok','Allowed.']], home:'Not needed.'},
+{id:'raising', n:'Raising agents (baking soda)', al:['raising agent','raising agents','leavening agent','sodium bicarbonate','baking soda','ammonium bicarbonate','sodium hydrogen carbonate'], codes:['503','500(ii)'], k:'thick', pct:0.8,
+ what:'Powders that release gas when heated.', why:'Make biscuits light and crunchy.', body:'Safe; baking soda adds sodium.', world:[['IN','ok','Allowed.']], home:'A pinch of baking soda.'},
+{id:'bromate', n:'Potassium bromate', al:['potassium bromate'], codes:['924'], k:'thick', pct:0.003,
+ what:'A flour "improver".', why:'Made bread rise higher and look whiter.',
+ body:'Classed as a possible human carcinogen. In 2016 an Indian study found it in many breads.',
+ world:[['IN','ban','FSSAI banned it in 2016.'],['EU','ban','Not allowed.'],['UK','ban','Not allowed.'],['US','limit','Still allowed federally; California bans it from 2027.']],
+ diff:'India banned it after a Centre for Science and Environment study; in the USA it stays legal nationally because the FDA has not formally removed it.',
+ home:'Good flour, time and kneading.',
+ q:['Which country banned potassium bromate in bread in 2016?',['India','USA','Japan'],0,'FSSAI banned it in 2016 after tests found it in common breads.']},
+{id:'ada', n:'Azodicarbonamide', al:['azodicarbonamide'], codes:['927a'], k:'thick', pct:0.0045, what:'A flour bleaching and dough agent.', why:'Stronger, whiter dough.', body:'Breaks down into substances that are being studied for safety. Also used to make foam mats.', world:[['US','limit','Allowed up to 45 ppm.'],['EU','ban','Not allowed in food.'],['AU','ban','Not allowed.']], home:'Time and kneading.'},
+
+/* ---------- NUTRIENTS ---------- */
+{id:'vitc', n:'Vitamin C (ascorbic acid)', al:['ascorbic acid','vitamin c','antioxidant'], codes:['300'], k:'nutri', pct:0.03,
+ what:'Vitamin C.', why:'Replaces vitamin C lost during heating, and keeps colour fresh.', body:'Good for you. Fresh fruit gives it naturally.',
+ world:[['IN','ok','Allowed.'],['EU','ok','Allowed.']], home:'Fresh fruit — drink juice soon after making, as vitamin C fades.'},
+{id:'vits', n:'Vitamins & minerals premix', al:['vitamins','minerals','vitamin premix','iron','calcium carbonate','vitamin a','vitamin d','folic acid','niacin'], k:'nutri', pct:0.05,
+ what:'Added vitamins and minerals.', why:'Fortification — or to make a "health" claim on the front.', body:'Helpful where diets lack them, but they do not cancel out sugar or salt.', world:[['IN','ok','Fortified foods carry the +F logo.']], home:'Varied whole foods.'}
+];
+
+/* ---------- CATEGORIES (home recipe + nutrition defaults + environment) ---------- */
+const CATS = {
+ drink: {label:'Fruit drink', unit:'ml', serving:250, kcal:140, sugar:34, sodium:20, satfat:0, acid:true,
+   pack:{name:'plastic bottle', grams:18, recyclable:'often recyclable PET'}, waterL:200,
+   home:{title:'Fresh whole-fruit orange juice', time:'5 minutes',
+     ing:['3 oranges (or sweet lime / mosambi)','A little water or ice if you like','Optional: a pinch of black salt and a mint leaf'],
+     steps:['Wash the fruit and cut it in half.','Squeeze it by hand or with a juicer — keep the pulp!','Taste first. Ripe fruit rarely needs sugar.','Drink it within 15–20 minutes, before the vitamin C fades.'],
+     note:'Even fresh juice is fruit sugar without much fibre. Eating the whole orange is better still.'}},
+ cola:  {label:'Fizzy cola', unit:'ml', serving:300, kcal:126, sugar:32, sodium:15, satfat:0, acid:true,
+   pack:{name:'plastic bottle', grams:20, recyclable:'often recyclable PET'}, waterL:170,
+   home:{title:'Lemon-ginger fizz', time:'5 minutes',
+     ing:['1 glass chilled soda water','Juice of ½ lemon','A thin slice of ginger, crushed','A few mint leaves','Optional: ½ teaspoon jaggery'],
+     steps:['Crush the ginger and mint in the glass.','Add lemon juice (and jaggery if using) and stir.','Pour in soda water slowly.','Drink fresh while it fizzes.'],
+     note:'Jaggery is still sugar — keep it small or leave it out.'}},
+ noodles:{label:'Instant noodles', unit:'g', serving:70, kcal:310, sugar:2, sodium:1100, satfat:7, acid:false,
+   pack:{name:'plastic wrapper', grams:3, recyclable:'multi-layer — hard to recycle'}, waterL:120,
+   home:{title:'Quick vegetable atta noodles', time:'15 minutes',
+     ing:['1 cup whole wheat or millet noodles','1 cup chopped vegetables (carrot, beans, peas, cabbage)','1 teaspoon oil','Your masala: ¼ tsp turmeric, ½ tsp cumin, ½ tsp coriander, a pinch of chilli, 1 garlic clove','A small pinch of salt, lemon to finish'],
+     steps:['Boil the noodles and drain them.','Warm the oil, add garlic and the spices for 30 seconds.','Add vegetables and cook 3–4 minutes.','Toss in the noodles, a small pinch of salt and lemon.'],
+     note:'Lemon and spices let you use much less salt.'}},
+ chips: {label:'Potato chips', unit:'g', serving:52, kcal:280, sugar:1, sodium:450, satfat:8, acid:false,
+   pack:{name:'chips packet', grams:3, recyclable:'multi-layer — hard to recycle'}, waterL:90,
+   home:{title:'Oven-baked masala potato or makhana', time:'25 minutes',
+     ing:['2 potatoes, sliced thin (or 2 cups makhana / fox nuts)','1 tablespoon oil','A pinch of salt','½ tsp chaat masala, chilli powder'],
+     steps:['Toss slices (or makhana) with oil.','Bake at 200 °C for 15–20 minutes (makhana: roast in a pan for 6–8 minutes).','Sprinkle salt and masala while warm.','Cool so they crisp up.'],
+     note:'Roasted chana or peanuts make a high-protein crunchy snack too.'}},
+ biscuit:{label:'Cream biscuits', unit:'g', serving:40, kcal:200, sugar:15, sodium:90, satfat:5, acid:false,
+   pack:{name:'biscuit wrapper', grams:4, recyclable:'multi-layer — hard to recycle'}, waterL:70,
+   home:{title:'Banana oat cookies', time:'25 minutes',
+     ing:['2 ripe bananas','1 cup oats','2 tablespoons peanut butter','1 tablespoon cocoa powder','4 chopped dates'],
+     steps:['Mash the bananas.','Mix in oats, peanut butter, cocoa and dates.','Make small flat rounds on a tray.','Bake at 180 °C for 15 minutes.'],
+     note:'Sweet from fruit, with fibre from oats.'}},
+ sauce: {label:'Tomato ketchup', unit:'g', serving:15, kcal:18, sugar:4, sodium:150, satfat:0, acid:true,
+   pack:{name:'plastic bottle', grams:30, recyclable:'sometimes recyclable'}, waterL:15,
+   home:{title:'Fresh tomato chutney-ketchup', time:'30 minutes',
+     ing:['5 ripe tomatoes','1 small onion','2 garlic cloves','4 dates (soaked)','1 tablespoon vinegar','A pinch of salt, pepper'],
+     steps:['Chop and cook everything (except vinegar) for 20 minutes.','Blend until smooth.','Simmer until thick, then add vinegar.','Cool and keep in the fridge — use within a week.'],
+     note:'No preservatives, so keep it cold and use it fast.'}},
+ candy: {label:'Fruit gummies', unit:'g', serving:25, kcal:85, sugar:15, sodium:10, satfat:0, acid:true,
+   pack:{name:'sweet wrapper', grams:2, recyclable:'multi-layer — hard to recycle'}, waterL:30,
+   home:{title:'Mango fruit leather (aam papad)', time:'Sun-dry 1–2 days, or oven 4 hours',
+     ing:['2 ripe mangoes','A squeeze of lemon','Optional: 1 teaspoon jaggery'],
+     steps:['Blend the mango pulp with lemon.','Spread thin on a greased plate or tray.','Dry in the sun (covered with a net) or in a low oven (around 80 °C).','Peel and cut into strips.'],
+     note:'Real fruit colour — no added dyes needed.'}},
+ other: {label:'Packaged food', unit:'g', serving:50, kcal:200, sugar:10, sodium:300, satfat:4, acid:false,
+   pack:{name:'packet', grams:4, recyclable:'often hard to recycle'}, waterL:80,
+   home:{title:'Make it from whole foods', time:'Varies',
+     ing:['The main ingredient in its whole form (fruit, grain, vegetable)','Spices and herbs for taste','A little oil, salt or sweetener — measured by you'],
+     steps:['Start from the first two ingredients on the label — those are the main ones.','Skip the additives — at home, you eat it fresh.','Taste before adding salt or sugar.','Make small batches and keep them cold.'],
+     note:'Fresh food does not need preservatives, colours or taste boosters.'}}
+};
+
+const PRESETS = [
+ {name:'Orange fruit drink', cat:'drink', icon:'🍊',
+  text:'Water, Sugar, Concentrated orange juice (10%), Acidity regulator (330), Stabiliser (440), Vitamin C (300), Preservative (211), Colour (110), Nature identical flavouring substances',
+  pct:{0:77,1:12.2}},
+ {name:'Fizzy cola', cat:'cola', icon:'🥤',
+  text:'Carbonated water, Sugar, Colour (150d), Acidity regulator (338), Natural flavours, Caffeine', pct:{0:89,1:10.6}},
+ {name:'Masala instant noodles', cat:'noodles', icon:'🍜',
+  text:'Refined wheat flour (maida), Palm oil, Salt, Wheat gluten, Thickener (412), Acidity regulators (500(i), 501(i)), Spices and condiments, Sugar, Flavour enhancer (627, 631), Hydrolysed groundnut protein, Antioxidant (319)',
+  pct:{0:68,1:17,2:3.5,3:3,6:2.5,7:1.5}},
+ {name:'Masala potato chips', cat:'chips', icon:'🥔',
+  text:'Potato, Edible vegetable oil (palmolein), Spices & condiments, Salt, Sugar, Flavour enhancer (621), Acidity regulator (330), Onion powder',
+  pct:{0:55,1:35,2:5.2,3:2.2,4:1.2}},
+ {name:'Chocolate cream biscuits', cat:'biscuit', icon:'🍪',
+  text:'Refined wheat flour (maida), Sugar, Palm oil, Cocoa solids, Invert sugar syrup, Raising agents (503(ii), 500(ii)), Emulsifier (322), Salt, Milk solids, Artificial flavouring substances (vanilla)',
+  pct:{0:45,1:28,2:17}},
+ {name:'Tomato ketchup', cat:'sauce', icon:'🍅',
+  text:'Water, Tomato paste (28%), Sugar, Salt, Acidity regulator (260), Thickener (1422), Preservative (211), Spices, Onion powder',
+  pct:{0:40,2:22}},
+ {name:'Bright fruit gummies', cat:'candy', icon:'🍬',
+  text:'Glucose syrup, Sugar, Gelatine, Citric acid, Colours (102, 129, 133, 171), Flavouring',
+  pct:{0:46,1:38,2:7}}
+];
+
+/* ===== INGREDIENT LAB — factory lines, glyphs, nutrients ===== */
+
+/* ---------- small drawings of the food at each stage (centred on 0,0) ---------- */
+const INK = 'stroke="#1d2433" stroke-width="2.5" stroke-linejoin="round"';
+const GLYPH = {
+  potato:   `<ellipse cx="0" cy="0" rx="22" ry="15" fill="#a9773f" ${INK}/><circle cx="-8" cy="-4" r="2" fill="#1d2433"/><circle cx="7" cy="4" r="2" fill="#1d2433"/><circle cx="10" cy="-6" r="1.6" fill="#1d2433"/>`,
+  peeled:   `<ellipse cx="0" cy="0" rx="20" ry="14" fill="#f3e3a1" ${INK}/>`,
+  slices:   `<ellipse cx="-10" cy="4" rx="13" ry="5" fill="#f3e3a1" ${INK}/><ellipse cx="0" cy="-2" rx="13" ry="5" fill="#f3e3a1" ${INK}/><ellipse cx="10" cy="-8" rx="13" ry="5" fill="#f3e3a1" ${INK}/>`,
+  chip:     `<path d="M-18 4 Q-9 -10 0 2 T18 -2 Q10 12 0 8 T-18 4Z" fill="#E69F00" ${INK}/>`,
+  chipspice:`<path d="M-18 4 Q-9 -10 0 2 T18 -2 Q10 12 0 8 T-18 4Z" fill="#E69F00" ${INK}/><circle cx="-6" cy="2" r="1.6" fill="#D55E00"/><circle cx="4" cy="4" r="1.6" fill="#D55E00"/><circle cx="10" cy="0" r="1.4" fill="#D55E00"/><circle cx="-12" cy="5" r="1.4" fill="#D55E00"/>`,
+  orange:   `<circle cx="0" cy="0" r="18" fill="#E69F00" ${INK}/><path d="M0 -18 Q4 -26 10 -24" fill="none" ${INK}/><circle cx="-6" cy="-5" r="1.5" fill="#1d2433" opacity=".4"/><circle cx="6" cy="4" r="1.5" fill="#1d2433" opacity=".4"/>`,
+  juice:    `<path d="M-13 -20 H13 L10 20 H-10Z" fill="#fff" ${INK}/><path d="M-12 -8 H12 L10 18 H-10Z" fill="#f0a43a"/><path d="M-13 -20 H13 L10 20 H-10Z" fill="none" ${INK}/>`,
+  conc:     `<rect x="-16" y="-20" width="32" height="40" rx="4" fill="#cfd6dd" ${INK}/><path d="M-16 -10 H16 M-16 10 H16" ${INK}/><rect x="-10" y="-6" width="20" height="12" fill="#c46a1b" ${INK}/>`,
+  water:    `<path d="M0 -20 C0 -20 -14 -2 -14 6 A14 14 0 0 0 14 6 C14 -2 0 -20 0 -20Z" fill="#56B4E9" ${INK}/>`,
+  syrup:    `<path d="M-14 -18 H14 L12 20 H-12Z" fill="#fff" ${INK}/><path d="M-13 -4 H13 L12 18 H-12Z" fill="#5a3220"/><path d="M-14 -18 H14 L12 20 H-12Z" fill="none" ${INK}/>`,
+  flour:    `<path d="M-16 -16 Q0 -24 16 -16 L18 20 H-18Z" fill="#fff" ${INK}/><text x="0" y="8" font-size="10" text-anchor="middle" font-weight="700" fill="#1d2433">ATTA</text>`,
+  dough:    `<path d="M-20 10 Q-22 -10 0 -12 Q22 -10 20 10Z" fill="#f3e3a1" ${INK}/>`,
+  sheet:    `<rect x="-24" y="-4" width="48" height="8" rx="2" fill="#f3e3a1" ${INK}/>`,
+  strands:  `<path d="M-22 -8 Q-16 -14 -10 -8 T2 -8 T14 -8 T24 -8 M-22 0 Q-16 -6 -10 0 T2 0 T14 0 T24 0 M-22 8 Q-16 2 -10 8 T2 8 T14 8 T24 8" fill="none" stroke="#c9a24a" stroke-width="3.5"/><path d="M-22 -8 Q-16 -14 -10 -8 T2 -8 T14 -8 T24 -8 M-22 0 Q-16 -6 -10 0 T2 0 T14 0 T24 0 M-22 8 Q-16 2 -10 8 T2 8 T14 8 T24 8" fill="none" stroke="#1d2433" stroke-width="1"/>`,
+  block:    `<rect x="-20" y="-14" width="40" height="28" rx="5" fill="#e6c77c" ${INK}/><path d="M-16 -8 Q-10 -12 -4 -8 T8 -8 T18 -8 M-16 0 Q-10 -4 -4 0 T8 0 T18 0 M-16 8 Q-10 4 -4 8 T8 8 T18 8" fill="none" stroke="#1d2433" stroke-width="1.5"/>`,
+  rawbis:   `<circle cx="0" cy="0" r="16" fill="#e8d3a6" ${INK}/><circle cx="-5" cy="-4" r="1.6" fill="#1d2433"/><circle cx="5" cy="-4" r="1.6" fill="#1d2433"/><circle cx="0" cy="5" r="1.6" fill="#1d2433"/>`,
+  biscuit:  `<circle cx="0" cy="0" r="16" fill="#6b4630" ${INK}/><circle cx="-5" cy="-4" r="1.6" fill="#fff"/><circle cx="5" cy="-4" r="1.6" fill="#fff"/><circle cx="0" cy="5" r="1.6" fill="#fff"/>`,
+  creambis: `<rect x="-18" y="-10" width="36" height="7" rx="3" fill="#6b4630" ${INK}/><rect x="-16" y="-3" width="32" height="6" fill="#fff" ${INK}/><rect x="-18" y="3" width="36" height="7" rx="3" fill="#6b4630" ${INK}/>`,
+  tomato:   `<circle cx="0" cy="2" r="17" fill="#D55E00" ${INK}/><path d="M-8 -14 L0 -10 L8 -14 L4 -8 L0 -16 L-4 -8Z" fill="#009E73" ${INK}/>`,
+  pulp:     `<path d="M-20 -4 Q-14 -14 0 -10 Q16 -16 20 -2 Q22 12 0 14 Q-22 12 -20 -4Z" fill="#c0392b" ${INK}/><circle cx="-6" cy="0" r="2" fill="#F0E442"/><circle cx="6" cy="4" r="2" fill="#F0E442"/>`,
+  paste:    `<path d="M-14 -14 H14 V18 Q14 22 10 22 H-10 Q-14 22 -14 18Z" fill="#fff" ${INK}/><path d="M-13 -2 H13 V18 Q13 21 10 21 H-10 Q-13 21 -13 18Z" fill="#a52a1c"/><rect x="-16" y="-20" width="32" height="7" rx="2" fill="#cfd6dd" ${INK}/>`,
+  sauce:    `<path d="M-14 -14 H14 V18 Q14 22 10 22 H-10 Q-14 22 -14 18Z" fill="#c0392b" ${INK}/><rect x="-16" y="-20" width="32" height="7" rx="2" fill="#cfd6dd" ${INK}/>`,
+  hotsyrup: `<path d="M-16 -6 H16 L13 18 H-13Z" fill="#E69F00" ${INK}/><path d="M-8 -12 Q-4 -18 -8 -24 M4 -12 Q8 -18 4 -24" fill="none" stroke="#1d2433" stroke-width="2"/>`,
+  gumliquid:`<path d="M-16 -6 H16 L13 18 H-13Z" fill="#D55E00" ${INK}/><path d="M-16 -6 H16 L13 18 H-13Z" fill="url(#p-zig)"/>`,
+  gummies:  `<path d="M-14 6 Q-14 -10 -6 -10 Q2 -10 2 6Z" fill="#D55E00" ${INK}/><path d="M0 10 Q0 -6 8 -6 Q16 -6 16 10Z" fill="#F0E442" ${INK}/><path d="M-20 14 Q-20 2 -12 2 Q-4 2 -4 14Z" fill="#56B4E9" ${INK}/>`,
+  mango:    `<path d="M-16 4 Q-18 -16 4 -16 Q20 -14 16 4 Q12 18 -2 16 Q-14 14 -16 4Z" fill="#E69F00" ${INK}/><path d="M4 -16 Q8 -24 14 -22" fill="none" ${INK}/>`,
+  raw:      `<rect x="-16" y="-14" width="32" height="28" rx="4" fill="#cfd6dd" ${INK}/><path d="M-16 -4 H16" ${INK}/>`,
+  mix:      `<path d="M-18 -10 H18 L14 16 H-14Z" fill="#c9b48a" ${INK}/>`,
+  packet:   c => `<path d="M-16 -22 L16 -22 L18 -16 L16 22 L-16 22 L-18 -16Z" fill="${c}" ${INK}/><path d="M-18 -16 H18 M-18 16 H18" stroke="#1d2433" stroke-width="1.5" stroke-dasharray="3 2"/><rect x="-10" y="-8" width="20" height="14" rx="2" fill="#fff" ${INK}/>`,
+  bottle:   c => `<path d="M-6 -24 H6 V-16 Q16 -10 16 0 V20 Q16 24 12 24 H-12 Q-16 24 -16 20 V0 Q-16 -10 -6 -16Z" fill="${c}" ${INK}/><rect x="-7" y="-28" width="14" height="6" rx="1" fill="#0072B2" ${INK}/><rect x="-14" y="2" width="28" height="12" fill="#fff" ${INK}/>`,
+  biscpack: `<rect x="-24" y="-12" width="48" height="24" rx="10" fill="#0072B2" ${INK}/><rect x="-10" y="-7" width="20" height="14" rx="2" fill="#fff" ${INK}/><path d="M-24 0 h-4 M24 0 h4" ${INK}/>`
+};
+function glyph(name, col){ const g = GLYPH[name]; return typeof g === 'function' ? g(col || '#E69F00') : (g || GLYPH.raw); }
+function packOf(cat){ return ({drink:'bottle', cola:'bottle', sauce:'bottle', biscuit:'biscpack'})[cat] || 'packet'; }
+const PACK_COL = {drink:'#f0a43a', cola:'#5a3220', sauce:'#c0392b', chips:'#E69F00', noodles:'#F0E442', candy:'#CC79A7', biscuit:'#0072B2', other:'#9a9a9a'};
+
+/* ---------- machines (each has an animated part) ---------- */
+function machineSVG(m){
+  const box = (x,y,w,h,f='#cfd6dd') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${f}" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>`;
+  const drops = (n, col, x0, w, y0, cls='fall') => Array.from({length:n},(_,i)=>`<circle class="${cls}" style="animation-delay:${(i*0.23).toFixed(2)}s" cx="${x0 + (i*37)%w}" cy="${y0}" r="4" fill="${col}" stroke="#1d2433" stroke-width="1"/>`).join('');
+  const M = {
+    wash:   `${box(210,40,180,60)}<text x="300" y="76" text-anchor="middle" font-weight="700" font-size="15">WATER JETS</text>${drops(8,'#56B4E9',225,150,108)}`,
+    peel:   `${box(200,30,200,120)}<g class="spin" style="transform-origin:300px 90px">${Array.from({length:10},(_,i)=>`<circle cx="${300+42*Math.cos(i*0.628)}" cy="${90+42*Math.sin(i*0.628)}" r="6" fill="#9a9a9a" stroke="#1d2433" stroke-width="2"/>`).join('')}<circle cx="300" cy="90" r="30" fill="#fff" stroke="#1d2433" stroke-width="3"/></g><text x="300" y="166" text-anchor="middle" font-size="13" font-weight="700">ROUGH ROLLERS RUB THE SKIN OFF</text>`,
+    slice:  `${box(220,20,160,80)}<g class="chop"><rect x="285" y="100" width="30" height="70" fill="#fff" stroke="#1d2433" stroke-width="3"/><path d="M285 170 L300 182 L315 170" fill="#fff" stroke="#1d2433" stroke-width="3"/></g><text x="300" y="60" text-anchor="middle" font-weight="700" font-size="15">SPINNING BLADES</text>`,
+    cut:    `${box(220,20,160,80)}<g class="chop"><rect x="285" y="100" width="30" height="70" fill="#fff" stroke="#1d2433" stroke-width="3"/><path d="M285 170 L300 182 L315 170" fill="#fff" stroke="#1d2433" stroke-width="3"/></g><text x="300" y="60" text-anchor="middle" font-weight="700" font-size="15">CUTTER</text>`,
+    fry:    `${box(190,120,220,70,'#E69F00')}<rect x="190" y="120" width="220" height="70" fill="url(#p-horiz)"/>${drops(7,'#fff7c2',205,190,180,'rise')}<rect x="420" y="40" width="20" height="120" rx="10" fill="#fff" stroke="#1d2433" stroke-width="3"/><rect x="425" y="70" width="10" height="86" rx="5" fill="#D55E00"/><text x="430" y="30" text-anchor="middle" font-weight="700" font-size="15">175°C</text><text x="300" y="110" text-anchor="middle" font-weight="700" font-size="15">HOT OIL</text>`,
+    season: `<g class="spin" style="transform-origin:300px 80px"><circle cx="300" cy="80" r="55" fill="#cfd6dd" stroke="#1d2433" stroke-width="3"/><path d="M255 80 H345 M300 35 V125" stroke="#1d2433" stroke-width="2"/></g>${drops(8,'#D55E00',240,120,40)}<text x="300" y="160" text-anchor="middle" font-weight="700" font-size="14">TUMBLING DRUM + MASALA</text>`,
+    pack:   `${box(250,10,100,160)}<path d="M270 30 H330 L320 70 H280Z" fill="#fff" stroke="#1d2433" stroke-width="3"/><text x="300" y="100" text-anchor="middle" font-weight="700" font-size="13">FILL &amp; SEAL</text><text x="300" y="120" text-anchor="middle" font-size="12">+ nitrogen gas</text><g class="bob"><rect x="285" y="130" width="30" height="20" fill="#fff" stroke="#1d2433" stroke-width="2"/></g>`,
+    squeeze:`${box(220,10,160,50)}<g class="chop"><rect x="270" y="60" width="60" height="60" fill="#9a9a9a" stroke="#1d2433" stroke-width="3"/></g><text x="300" y="42" text-anchor="middle" font-weight="700" font-size="15">PRESS</text>`,
+    evaporate:`${box(210,60,180,120,'#eef3f6')}<text x="300" y="130" text-anchor="middle" font-weight="700" font-size="14">BOIL OFF WATER</text>${[0,1,2].map(i=>`<path class="steam" style="animation-delay:${i*0.5}s" d="M${260+i*40} 55 Q${250+i*40} 40 ${260+i*40} 25 Q${270+i*40} 10 ${260+i*40} 0" fill="none" stroke="#1d2433" stroke-width="3"/>`).join('')}`,
+    heat:   `<path d="M210 60 H390 V80 H210 V100 H390 V120 H210 V140 H390" fill="none" stroke="#1d2433" stroke-width="8"/><path d="M210 60 H390 V80 H210 V100 H390 V120 H210 V140 H390" fill="none" stroke="#E69F00" stroke-width="4"/>${[0,1,2,3].map(i=>`<path class="flame" style="animation-delay:${i*0.2}s" d="M${235+i*45} 175 Q${225+i*45} 160 ${235+i*45} 150 Q${245+i*45} 160 ${235+i*45} 175Z" fill="#D55E00" stroke="#1d2433" stroke-width="2"/>`).join('')}<text x="300" y="40" text-anchor="middle" font-weight="700" font-size="15">HEAT TO ABOUT 90°C (PASTEURISE)</text>`,
+    mix:    `<path d="M220 40 V150 Q220 170 240 170 H360 Q380 170 380 150 V40" fill="#eef3f6" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/><path d="M300 10 V140" stroke="#1d2433" stroke-width="5"/><g class="spin" style="transform-origin:300px 140px"><path d="M265 140 H335" stroke="#1d2433" stroke-width="7" stroke-linecap="round"/></g><text x="300" y="30" text-anchor="middle" font-weight="700" font-size="14">MIXER</text>`,
+    roll:   `${[0,1].map(i=>`<g class="spin" style="transform-origin:300px ${70+i*70}px"><circle cx="300" cy="${70+i*70}" r="30" fill="#cfd6dd" stroke="#1d2433" stroke-width="3"/><path d="M300 ${40+i*70} V${100+i*70}" stroke="#1d2433" stroke-width="2"/></g>`).join('')}<text x="380" y="110" font-weight="700" font-size="14">ROLLERS</text>`,
+    crush:  `${[0,1].map(i=>`<g class="spin" style="transform-origin:${270+i*60}px 100px"><circle cx="${270+i*60}" cy="100" r="30" fill="#cfd6dd" stroke="#1d2433" stroke-width="3" stroke-dasharray="8 4"/></g>`).join('')}<text x="300" y="40" text-anchor="middle" font-weight="700" font-size="14">CRUSH &amp; HEAT</text>`,
+    sieve:  `<g class="shake">${box(210,90,180,50,'#fff')}<rect x="210" y="90" width="180" height="50" fill="url(#p-cross)"/></g><text x="300" y="70" text-anchor="middle" font-weight="700" font-size="14">SIEVE — SKINS &amp; SEEDS OUT</text>`,
+    steam:  `${box(200,30,200,130,'#eef3f6')}<text x="300" y="100" text-anchor="middle" font-weight="700" font-size="14">STEAM ~100°C</text>${[0,1,2].map(i=>`<path class="steam" style="animation-delay:${i*0.5}s" d="M${255+i*45} 28 Q${245+i*45} 14 ${255+i*45} 0" fill="none" stroke="#1d2433" stroke-width="3"/>`).join('')}`,
+    bake:   `<path d="M170 60 H430 V170 H170Z" fill="#cfd6dd" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>${[0,1,2,3,4].map(i=>`<path class="flame" style="animation-delay:${i*0.15}s" d="M${195+i*50} 80 q10 8 20 0 q10 -8 20 0" fill="none" stroke="#D55E00" stroke-width="4"/>`).join('')}<text x="300" y="50" text-anchor="middle" font-weight="700" font-size="14">TUNNEL OVEN (VERY LONG)</text>`,
+    cool:   `${box(230,20,140,140,'#eef3f6')}<g class="spin" style="transform-origin:300px 90px">${[0,1,2,3].map(i=>`<ellipse cx="300" cy="65" rx="10" ry="24" fill="#56B4E9" stroke="#1d2433" stroke-width="2" transform="rotate(${i*90} 300 90)"/>`).join('')}</g><circle cx="300" cy="90" r="7" fill="#1d2433"/><text x="300" y="180" text-anchor="middle" font-weight="700" font-size="14">COOL</text>`,
+    deposit:`${box(240,10,120,60)}<path d="M290 70 L300 90 L310 70" fill="#cfd6dd" stroke="#1d2433" stroke-width="3"/>${drops(3,'#D55E00',300,1,100)}<text x="300" y="45" text-anchor="middle" font-weight="700" font-size="13">DEPOSITOR</text><text x="300" y="185" text-anchor="middle" font-size="12">into moulds</text>`,
+    cure:   `${box(200,20,200,150,'#fff6c9')}<circle cx="300" cy="85" r="34" fill="#fff" stroke="#1d2433" stroke-width="3"/><g class="spin slow" style="transform-origin:300px 85px"><path d="M300 85 V60" stroke="#1d2433" stroke-width="4" stroke-linecap="round"/></g><path d="M300 85 H318" stroke="#1d2433" stroke-width="3"/><text x="300" y="150" text-anchor="middle" font-weight="700" font-size="13">DRY 1–2 DAYS</text>`,
+    carbonate:`<path d="M220 40 V150 Q220 170 240 170 H360 Q380 170 380 150 V40" fill="#eef3f6" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>${drops(9,'#fff',230,140,160,'rise')}<text x="300" y="30" text-anchor="middle" font-weight="700" font-size="14">CO₂ GAS + COLD</text>`,
+    fill:   `${box(240,10,120,50)}<path d="M292 60 H308 V80 H292Z" fill="#cfd6dd" stroke="#1d2433" stroke-width="3"/><rect class="pour" x="296" y="80" width="8" height="70" fill="#56B4E9"/><text x="300" y="42" text-anchor="middle" font-weight="700" font-size="13">FILL &amp; CAP</text>`,
+    filter: `${box(240,20,120,140,'#eef3f6')}<rect x="240" y="60" width="120" height="60" fill="url(#p-dots)"/><text x="300" y="50" text-anchor="middle" font-weight="700" font-size="13">FILTERS</text>${drops(4,'#56B4E9',255,90,130)}`,
+    receive:`${box(220,40,160,110,'#fff')}<text x="300" y="100" text-anchor="middle" font-weight="700" font-size="14">CHECK &amp; WEIGH</text>`
+  };
+  return M[m] || M.receive;
+}
+function lineSceneSVG(stage, cat){
+  const pc = PACK_COL[cat];
+  const g = (n) => `<g transform="translate(0 0)">${glyph(n, pc)}</g>`;
+  const row = (n) => [0,1,2,3,4,5].map(i => `<g transform="translate(${i*130-40} 196)">${g(n)}</g>`).join('');
+  return `<svg viewBox="0 0 600 260" class="linesvg" role="img" aria-label="${esc(stage.name)} machine">
+    <clipPath id="cl-in"><rect x="0" y="120" width="300" height="140"/></clipPath>
+    <clipPath id="cl-out"><rect x="300" y="120" width="300" height="140"/></clipPath>
+    <g clip-path="url(#cl-in)"><g class="belt">${row(stage.in)}</g></g>
+    <g clip-path="url(#cl-out)"><g class="belt">${row(stage.out)}</g></g>
+    <rect x="10" y="222" width="580" height="16" rx="8" fill="#cfd6dd" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>
+    ${[40,120,200,280,360,440,520].map(x=>`<circle cx="${x}" cy="230" r="4" fill="#1d2433"/>`).join('')}
+    <g>${machineSVG(stage.m)}</g>
+    <text x="20" y="250" font-size="12" fill="#4a5263">before</text><text x="545" y="250" font-size="12" fill="#4a5263">after</text>
+  </svg>`;
+}
+
+/* ---------- factory lines (what really happens) + the home alternative ---------- */
+const S_ = (m, name, i, o, f, change, home, tool) => ({m, name, in:i, out:o, f, change, home, tool});
+const LINES = {
+ chips: [
+  S_('wash','Washing','potato','potato','Truckloads of potatoes are tipped onto belts. Water jets and tumbling barrels wash off soil and stones.','Nothing is lost yet — this is still a whole vegetable.','Scrub potatoes under the tap with a brush.','🪥'),
+  S_('peel','Peeling','potato','peeled','Rough, sand-paper-like rollers (or a blast of steam) rub the skin off thousands of potatoes a minute.','Much of the potato’s fibre is in and just under the skin — it goes in the bin.','Use a peeler — or keep the skin on for more fibre.','🔪'),
+  S_('slice','Slicing','peeled','slices','Spinning blades cut each potato into slices about 1–2 mm thin.','More cut surface means more oil soaks in later.','Slice thin with a knife or a mandoline (watch your fingers!).','🔪'),
+  S_('wash','Rinsing the starch','slices','slices','Slices are rinsed to wash off surface starch, so they do not stick together or burn.','Some vitamin C and potassium wash away.','Soak slices in cold water for 15 minutes, then pat dry.','💧'),
+  S_('fry','Frying','slices','chip','Slices float through a long bath of oil at about 175°C for 2–3 minutes until crisp.','Water leaves and oil goes in: fried chips are roughly a third oil by weight. Very hot frying also forms acrylamide.','Bake at 200°C or air-fry with just one spoon of oil.','♨️'),
+  S_('season','Seasoning','chip','chipspice','Hot chips tumble in a rotating drum while salt, masala, sugar and MSG are sprinkled on.','Most of the packet’s salt is added here.','Sprinkle a pinch of salt and chaat masala yourself.','🧂'),
+  S_('pack','Packing','chipspice','packet','A machine forms a bag, weighs the chips, fills it with nitrogen gas and seals it.','The nitrogen keeps chips crisp and stops the oil going stale — that is why the bag looks "half empty".','An airtight jar. Eat within a day or two.','🫙')],
+ noodles: [
+  S_('mix','Mixing dough','flour','dough','Refined flour is mixed with water, salt and alkaline salts (sodium and potassium carbonate).','The carbonates make the noodles springy and yellowish.','Knead whole wheat or millet flour with water.','🥣'),
+  S_('roll','Rolling','dough','sheet','Heavy rollers press the dough into a long, thin sheet.','—','Roll it thin with a belan (rolling pin).','🪵'),
+  S_('cut','Cutting & waving','sheet','strands','A slitter cuts the sheet into strands and makes the famous waves.','—','Cut strips with a knife, or buy whole-wheat noodles.','🔪'),
+  S_('steam','Steaming','strands','strands','Strands are steamed for a couple of minutes to cook the starch.','—','Simply boil fresh noodles for a few minutes.','♨️'),
+  S_('cut','Cutting into blocks','strands','block','The noodle ribbon is cut and folded into square or round blocks.','—','No need — cook only what you eat.','✂️'),
+  S_('fry','Flash-frying','block','block','Blocks are fried in palm oil at about 150°C for 1–2 minutes to dry them out.','This is why one block carries several grams of saturated fat.','No frying needed for fresh noodles.','🚫'),
+  S_('cool','Cooling','block','block','Fans cool the blocks so they do not sweat inside the packet.','—','—','🌬️'),
+  S_('pack','Packing','block','packet','Each block is wrapped with a "tastemaker" sachet of salt, MSG and spices.','The sachet is where most of the salt is.','Make your own masala: turmeric, cumin, coriander, a little salt.','🧂')],
+ drink: [
+  S_('wash','Washing fruit','orange','orange','Oranges are washed and sorted at a juice plant, often in another state or country.','—','Wash 3 oranges.','💧'),
+  S_('squeeze','Extracting juice','orange','juice','Machines squeeze hundreds of oranges a minute.','Peel and most pulp — the fibre — are separated out.','Squeeze by hand. Keep the pulp!','🍊'),
+  S_('evaporate','Making concentrate','juice','conc','Juice is heated under low pressure to boil off most of its water, then frozen and shipped.','Heating changes the fresh taste and destroys some vitamin C.','Not needed — you drink it straight away.','🚫'),
+  S_('mix','Rebuilding the drink','conc','juice','At the bottling plant, concentrate is mixed with lots of water, sugar, acid, colour and flavour.','A "fruit drink" can be only about 10% juice — most of it is sugar water.','Nothing to add. Taste first — ripe fruit is sweet.','🥄'),
+  S_('heat','Pasteurising','juice','juice','The drink is heated to about 90°C for a few seconds to kill germs.','More vitamin C is lost, so factories add vitamin C back.','Skip heating: fresh juice keeps its vitamin C (drink within 20 minutes).','⏱️'),
+  S_('fill','Bottling','juice','bottle','Bottles are filled hot, capped and labelled.','Hot-filling plus preservatives let it last for months.','Pour into a glass.','🥛')],
+ cola: [
+  S_('filter','Treating water','water','water','City water is filtered and purified so every bottle tastes the same.','—','Use clean drinking water or soda water.','🚰'),
+  S_('mix','Making syrup','water','syrup','Sugar is dissolved into a thick syrup with secret flavour, caramel colour, phosphoric acid and caffeine.','About 8 teaspoons of sugar end up in one 300 ml bottle.','Lemon juice, crushed ginger and mint — a little jaggery only if you want.','🍋'),
+  S_('mix','Blending','syrup','syrup','Syrup is mixed with treated water in exact amounts.','—','Stir it in your glass.','🥄'),
+  S_('carbonate','Chilling & fizzing','syrup','syrup','The drink is chilled and carbon dioxide gas is pushed in under pressure.','The bubbles plus acid make it sharp — and hard on tooth enamel.','Top up with chilled soda water.','🫧'),
+  S_('fill','Filling & capping','syrup','bottle','Bottles are filled very fast and capped to trap the gas.','—','Drink fresh while it fizzes.','🥤')],
+ biscuit: [
+  S_('mix','Mixing dough','flour','dough','Refined flour, sugar, palm fat, raising agents and emulsifiers are mixed in giant bowls.','Sugar and fat make up close to half the biscuit.','Mash bananas with oats and peanut butter.','🥣'),
+  S_('roll','Moulding','dough','rawbis','A rotary mould presses the dough into thousands of biscuit shapes.','—','Shape small rounds with your hands.','👐'),
+  S_('bake','Baking','rawbis','biscuit','Biscuits ride through a tunnel oven up to 100 metres long, baking in a few minutes.','Browning gives flavour; very hot baking can form some acrylamide.','Bake at 180°C for about 15 minutes.','🔥'),
+  S_('cool','Cooling','biscuit','biscuit','Long cooling belts bring them to room temperature.','—','Cool on a plate.','🌬️'),
+  S_('deposit','Cream filling','biscuit','creambis','Cream made of sugar, fat and flavour is squirted on and a top biscuit is pressed down.','The cream is mostly sugar and fat.','Fill with a little peanut butter or date paste — or no filling.','🥜'),
+  S_('pack','Packing','creambis','biscpack','Stacks are wrapped in plastic film and boxed.','—','A tin box at home.','📦')],
+ sauce: [
+  S_('wash','Washing tomatoes','tomato','tomato','Tomatoes are washed and sorted.','—','Wash 5 ripe tomatoes.','💧'),
+  S_('crush','Crushing & hot break','tomato','pulp','Tomatoes are crushed and heated quickly so the sauce stays thick.','—','Chop and cook them in a pan.','🔪'),
+  S_('sieve','Sieving','pulp','pulp','Skins and seeds are sieved out.','Some fibre leaves with the skins.','Blend everything — or press through a sieve if you like it smooth.','🥄'),
+  S_('evaporate','Making paste','pulp','paste','The pulp is boiled down to a thick paste that can be stored for a year.','Long heating lowers vitamin C, but makes lycopene easier to absorb.','Simmer until thick.','♨️'),
+  S_('mix','Mixing','paste','sauce','Paste is mixed with water, sugar, vinegar, salt, spices, thickener and preservative.','About a quarter of ketchup can be sugar.','Add dates for sweetness, vinegar, a pinch of salt.','🥄'),
+  S_('fill','Bottling','sauce','bottle','Ketchup is filled hot into bottles and sealed.','—','A clean glass jar in the fridge — use within a week.','🫙')],
+ candy: [
+  S_('heat','Cooking syrup','syrup','hotsyrup','Sugar and glucose syrup are boiled together.','This is almost pure sugar.','Blend 2 ripe mangoes.','🥭'),
+  S_('mix','Adding the rest','hotsyrup','gumliquid','Gelatine, citric acid, colours and flavour are stirred in.','Bright colours come from synthetic dyes.','A squeeze of lemon — the colour is the mango’s own.','🍋'),
+  S_('deposit','Depositing','gumliquid','gummies','A machine drops the liquid into thousands of moulds pressed into trays of starch.','—','Spread the pulp thin on a greased plate.','🍽️'),
+  S_('cure','Drying','gummies','gummies','Trays rest in warm rooms for 1–2 days so the sweets set firm.','—','Dry in the sun under a net, or in a low oven.','☀️'),
+  S_('pack','Coating & packing','gummies','packet','Sweets are tumbled with a little oil or wax so they don’t stick, then bagged.','—','Cut into strips and store in a jar.','🫙')],
+ other: [
+  S_('receive','Raw materials arrive','raw','raw','Bulk ingredients arrive in sacks, tankers and drums and are checked.','—','Buy whole ingredients.','🛒'),
+  S_('mix','Mixing','raw','mix','Ingredients are weighed by machine and mixed.','—','Mix by hand — you choose how much salt and sugar.','🥣'),
+  S_('heat','Cooking','mix','mix','The mix is cooked or baked at high temperature.','Some vitamins are lost with heat.','Cook gently, eat fresh.','🍳'),
+  S_('pack','Packing','mix','packet','Sealed in packaging that keeps air and germs out.','Packaging lets it last months on a shelf.','A box in the fridge for a few days.','📦')]
+};
+
+/* ---------- nutrition per serving: bought vs homemade (approximate) ---------- */
+const NUT = {  // kcal, sugar(total g), added(g), sodium(mg), satfat(g), fibre(g), protein(g), vitc(mg)
+ drink:  {bought:{kcal:140,sugar:34,added:31,sodium:20,satfat:0,fibre:0,protein:0.2,vitc:15}, home:{kcal:112,sugar:21,added:0,sodium:2,satfat:0,fibre:0.5,protein:1.7,vitc:124}},
+ cola:   {bought:{kcal:126,sugar:32,added:32,sodium:15,satfat:0,fibre:0,protein:0,vitc:0}, home:{kcal:18,sugar:3,added:2.5,sodium:10,satfat:0,fibre:0.2,protein:0.2,vitc:10}},
+ noodles:{bought:{kcal:310,sugar:2,added:1.5,sodium:1100,satfat:7,fibre:2,protein:7,vitc:0}, home:{kcal:300,sugar:4,added:0,sodium:300,satfat:0.7,fibre:7,protein:10,vitc:15}},
+ chips:  {bought:{kcal:280,sugar:1,added:0.7,sodium:450,satfat:8,fibre:2,protein:3,vitc:5}, home:{kcal:165,sugar:0.8,added:0,sodium:150,satfat:1,fibre:3,protein:3.5,vitc:12}},
+ biscuit:{bought:{kcal:200,sugar:15,added:14,sodium:90,satfat:5,fibre:1,protein:2.5,vitc:0}, home:{kcal:140,sugar:9,added:0,sodium:20,satfat:1,fibre:3,protein:4,vitc:2}},
+ sauce:  {bought:{kcal:18,sugar:4,added:3,sodium:150,satfat:0,fibre:0.2,protein:0.2,vitc:2}, home:{kcal:10,sugar:2,added:0,sodium:40,satfat:0,fibre:0.5,protein:0.3,vitc:3}},
+ candy:  {bought:{kcal:85,sugar:15,added:15,sodium:10,satfat:0,fibre:0,protein:1.5,vitc:0}, home:{kcal:80,sugar:17,added:0,sodium:2,satfat:0,fibre:2,protein:0.6,vitc:10}},
+ other:  {bought:{kcal:200,sugar:10,added:9,sodium:300,satfat:4,fibre:1,protein:3,vitc:0}, home:{kcal:150,sugar:4,added:0,sodium:100,satfat:1,fibre:3,protein:4,vitc:5}}
+};
+const NUT_ROWS = [
+ ['kcal','Energy','kcal','less'],['added','Added sugar','g','less'],['sugar','Total sugar','g','less'],['sodium','Sodium','mg','less'],
+ ['satfat','Saturated fat','g','less'],['fibre','Fibre','g','more'],['protein','Protein','g','more'],['vitc','Vitamin C','mg','more']];
+
+/* ===== INGREDIENT LAB — engine (shared by desktop and phone designs) ===== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, S.motion ? ms : Math.min(ms, 60)));
+
+const S = {name:'friend', voice:true, sound:true, rate:0.9, size:1, country:'IN', motion:true, contrast:false,
+  product:null, steps:[], step:-1, score:0, total:0, asked:new Set(), covered:[], fill:0, busy:false, talkPath:[]};
+try { const p = JSON.parse(localStorage.getItem('ilab-prefs')||'{}'); Object.assign(S, p); } catch(e) {}
+try { if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches && !localStorage.getItem('ilab-prefs')) S.motion = false; } catch(e) {}
+function savePrefs(){ try { localStorage.setItem('ilab-prefs', JSON.stringify({name:S.name, voice:S.voice, sound:S.sound, rate:S.rate, size:S.size, country:S.country, motion:S.motion, contrast:S.contrast})); } catch(e) {} }
+
+/* ---------- shared SVG defs: patterns (colour-blind safe) + hand-drawn wobble ---------- */
+function injectDefs(){
+  const ink = '#1d2433';
+  const P = (id, body, w=8) => `<pattern id="${id}" width="${w}" height="${w}" patternUnits="userSpaceOnUse">${body}</pattern>`;
+  const s = `stroke="${ink}" stroke-opacity=".45" stroke-width="1.2" fill="none"`;
+  document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+   <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.6"/></filter>
+   ${P('p-dots', `<circle cx="4" cy="4" r="1.4" fill="${ink}" fill-opacity=".45"/>`)}
+   ${P('p-cross', `<path d="M0 0L8 8M8 0L0 8" ${s}/>`)}
+   ${P('p-diag', `<path d="M-2 2L2 -2M0 8L8 0M6 10L10 6" ${s}/>`)}
+   ${P('p-vert', `<path d="M4 0V8" ${s}/>`)}
+   ${P('p-zig', `<path d="M0 6L2 2L4 6L6 2L8 6" ${s}/>`)}
+   ${P('p-horiz', `<path d="M0 4H8" ${s}/>`)}
+   ${P('p-ring', `<circle cx="5" cy="5" r="2.2" ${s}/>`,10)}
+   ${P('p-wave', `<path d="M0 5Q2.5 1 5 5T10 5" ${s}/>`,10)}
+   ${P('p-plus', `<path d="M5 2V8M2 5H8" ${s}/>`,10)}
+  </defs></svg>`);
+}
+
+/* ---------- kind icons: shape + colour + text, never colour alone ---------- */
+function kindIcon(k, size=22){
+  const K = KINDS[k] || KINDS.base, c = K.color, o = 'stroke="#1d2433" stroke-width="1.6"';
+  const shapes = {
+    circle:`<circle cx="12" cy="12" r="8" fill="${c}" ${o}/>`,
+    square:`<rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="${c}" ${o}/>`,
+    diamond:`<path d="M12 3L21 12L12 21L3 12Z" fill="${c}" ${o}/>`,
+    shield:`<path d="M12 3L20 6V12C20 16 16 19.5 12 21C8 19.5 4 16 4 12V6Z" fill="${c}" ${o}/>`,
+    drop:`<path d="M12 3C12 3 5 11 5 15A7 7 0 0 0 19 15C19 11 12 3 12 3Z" fill="${c}" ${o}/>`,
+    oval:`<ellipse cx="12" cy="12" rx="9" ry="6" fill="${c}" ${o}/>`,
+    star:`<path d="M12 3L14.6 9.2L21 9.6L16 13.8L17.6 20.4L12 16.8L6.4 20.4L8 13.8L3 9.6L9.4 9.2Z" fill="${c}" ${o}/>`,
+    wave:`<path d="M3 9Q7.5 4 12 9T21 9V17Q16.5 12 12 17T3 17Z" fill="${c}" ${o}/>`,
+    plus:`<path d="M9 3H15V9H21V15H15V21H9V15H3V9H9Z" fill="${c}" ${o}/>`
+  };
+  return `<svg class="kicon" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${shapes[K.shape]}</svg>`;
+}
+
+/* ---------- voice + guide ---------- */
+let voices = [];
+function loadVoices(){ if ('speechSynthesis' in window) voices = speechSynthesis.getVoices(); }
+if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(){
+  return voices.find(v => /en[-_]IN/i.test(v.lang)) || voices.find(v => /en[-_]GB/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang));
+}
+let lastSpoken = '';
+function speak(text, html){
+  lastSpoken = text;
+  const b = $('#guideText'); if (b){ b.innerHTML = html || esc(text); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  const g = $('#guide'); g && g.classList.add('talking');
+  const stop = () => g && g.classList.remove('talking');
+  if (S.voice && 'speechSynthesis' in window){
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickVoice(); if (v) u.voice = v;
+      u.rate = S.rate; u.pitch = 1.05;
+      u.onend = stop; u.onerror = stop;
+      speechSynthesis.speak(u);
+    } catch(e){ setTimeout(stop, 1500); }
+  } else setTimeout(stop, Math.min(4000, text.length * 35));
+}
+function hush(){ try { speechSynthesis.cancel(); } catch(e){} $('#guide')?.classList.remove('talking'); }
+
+/* tiny pour + ding sounds, made in the browser (no files) */
+let actx;
+function sound(type){
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    if (type === 'pour'){
+      const len = 0.7, buf = actx.createBuffer(1, actx.sampleRate*len, actx.sampleRate), d = buf.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.sin(Math.PI*i/d.length);
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const f = actx.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(500,t); f.frequency.linearRampToValueAtTime(1200,t+len); f.Q.value=1.5;
+      const gn = actx.createGain(); gn.gain.value = 0.18;
+      src.connect(f).connect(gn).connect(actx.destination); src.start();
+    } else {
+      const o = actx.createOscillator(), gn = actx.createGain();
+      o.frequency.value = type==='good' ? 880 : 300; o.type = 'triangle';
+      gn.gain.setValueAtTime(0.15,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.connect(gn).connect(actx.destination); o.start(); o.stop(t+0.5);
+      if (type==='good'){ const o2 = actx.createOscillator(), g2 = actx.createGain(); o2.frequency.value=1320; o2.type='triangle'; g2.gain.setValueAtTime(0.0001,t); g2.gain.setValueAtTime(0.12,t+0.12); g2.gain.exponentialRampToValueAtTime(0.001,t+0.6); o2.connect(g2).connect(actx.destination); o2.start(t); o2.stop(t+0.6); }
+    }
+  } catch(e){}
+}
+
+/* ---------- Professor Nimbu (original character) ---------- */
+function guideSVG(){
+  return `<svg viewBox="0 0 140 170" class="nimbu" role="img" aria-label="Professor Nimbu, a lemon scientist">
+   <g filter="url(#rough)" stroke="#1d2433" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M28 168 C30 128 48 116 70 116 C92 116 110 128 112 168Z" fill="#fff"/>
+    <path d="M70 118 L58 168 M70 118 L82 168" fill="none"/>
+    <rect x="86" y="138" width="14" height="12" fill="#fff"/><path d="M90 132 V144" stroke="#0072B2" stroke-width="4"/>
+    <path d="M70 12 C64 4 60 4 58 10 C34 14 18 36 18 62 C18 92 40 116 70 116 C100 116 122 92 122 62 C122 36 106 14 82 10 C80 4 76 4 70 12Z" fill="#F0E442"/>
+    <path d="M70 12 C72 4 80 0 88 2 C84 8 78 11 70 12Z" fill="#009E73"/>
+    <circle cx="50" cy="66" r="12" fill="#fff"/><circle cx="90" cy="66" r="12" fill="#fff"/>
+    <path d="M38 64 H24 M102 64 H116 M62 66 H78" fill="none"/>
+    <circle class="eye" cx="51" cy="67" r="4.5" fill="#1d2433" stroke="none"/><circle class="eye" cx="89" cy="67" r="4.5" fill="#1d2433" stroke="none"/>
+    <path d="M40 46 Q50 40 60 45 M80 45 Q90 40 100 46" fill="none"/>
+    <ellipse class="mouth" cx="70" cy="94" rx="10" ry="4" fill="#D55E00"/>
+    <circle cx="34" cy="86" r="5" fill="#E69F00" stroke="none" opacity=".6"/><circle cx="106" cy="86" r="5" fill="#E69F00" stroke="none" opacity=".6"/>
+   </g></svg>`;
+}
+
+/* ---------- parsing a label ---------- */
+const ALIASES = []; ING.forEach(e => e.al.forEach(a => ALIASES.push([a, e]))); ALIASES.sort((a,b)=>b[0].length-a[0].length);
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const ALIAS_RE = ALIASES.map(([a,e]) => [new RegExp('(^|[^a-z])' + reEsc(a) + '([^a-z]|$)', 'i'), e]);
+function findByCode(code, roman){
+  code = code.toLowerCase();
+  if (roman){ const k = code + '(' + roman.toLowerCase() + ')'; const e = ING.find(x => (x.codes||[]).includes(k)); if (e) return e; }
+  return ING.find(x => (x.codes||[]).includes(code));
+}
+function findByName(str){ const s = str.toLowerCase().replace(/\s+/g,' '); for (const [re,e] of ALIAS_RE) if (re.test(s)) return e; return null; }
+function splitTop(t){
+  const out = []; let d = 0, cur = '';
+  for (const ch of t){
+    if ('([{'.includes(ch)) d++;
+    if (')]}'.includes(ch)) d = Math.max(0, d-1);
+    if (d === 0 && /[,;\n•·]/.test(ch)){ out.push(cur); cur=''; } else cur += ch;
+  }
+  out.push(cur); return out.map(x=>x.trim().replace(/\.$/,'')).filter(Boolean);
+}
+const GENERIC = {
+  base:'It looks like a main food ingredient.', sugar:'It looks like a kind of sugar — count it as added sugar.',
+  acid:'It adjusts sourness or acidity.', pres:'It helps the product last longer on the shelf.',
+  colour:'It changes how the food looks.', fat:'It is a fat or oil.', flav:'It adds or boosts taste.',
+  thick:'It changes texture — thicker, smoother or lighter.', nutri:'It is an added vitamin or mineral.'
+};
+function guessKind(s){
+  s = s.toLowerCase();
+  if (/syrup|sugar|ose\b|honey|jaggery|sweeten/.test(s)) return 'sugar';
+  if (/oil|fat|butter|ghee|shortening/.test(s)) return 'fat';
+  if (/colou?r/.test(s)) return 'colour';
+  if (/preserv|antioxidant|benzo|sorb|nitr|sulph|sulf/.test(s)) return 'pres';
+  if (/acid|regulator/.test(s)) return 'acid';
+  if (/flavou?r|salt|spice|extract|enhancer|masala/.test(s)) return 'flav';
+  if (/gum|starch|emulsif|stabili|thicken|raising|lecithin|cellulose/.test(s)) return 'thick';
+  if (/vitamin|mineral|iron|zinc|calcium/.test(s)) return 'nutri';
+  return 'base';
+}
+function unknownEntry(raw){
+  const k = guessKind(raw); const n = raw.replace(/\s+/g,' ').replace(/^./, c=>c.toUpperCase());
+  return {id:'u-'+n.toLowerCase(), n, k, unknown:true,
+    what:`"${n}" is not in my lab notebook yet.`, why:GENERIC[k],
+    body:'Look up its INS or E-number on the FSSAI website or ask a dietitian to learn more.', world:[], home:'',
+    pct: k==='base'||k==='sugar'||k==='fat' ? null : 0.2};
+}
+function parseIngredients(text){
+  text = text.replace(/^[\s\S]*?ingredients?\s*[:\-–]/i, m => /ingredients?/i.test(m) ? '' : m);
+  const items = [];
+  for (const part of splitTop(text)){
+    const raw = part.replace(/\s+/g,' ').trim(); if (raw.length < 2) continue;
+    const pm = raw.match(/(\d+(?:\.\d+)?)\s*%/);
+    const found = [];
+    const codeRe = /(?:\b(?:e|ins)\s*-?\s*)?\b(\d{3,4}[a-d]?)\b(?:\s*\(\s*([ivx]+)\s*\))?/gi;
+    let m; while ((m = codeRe.exec(raw))){ const e = findByCode(m[1], m[2]); if (e && !found.includes(e)) found.push(e); }
+    if (!found.length){ const e = findByName(raw.replace(/\([^)]*\d[^)]*\)/g,'')) || findByName(raw); found.push(e || unknownEntry(raw.replace(/\(.*?\)/g,'').trim() || raw)); }
+    found.forEach(e => items.push({raw, e, pct: (found.length===1 && pm) ? parseFloat(pm[1]) : null}));
+  }
+  return items;
+}
+function guessCat(name, items){
+  const s = (name + ' ' + items.map(i=>i.e.n).join(' ')).toLowerCase();
+  if (/cola|soda|fizzy|soft drink|pepsi|coke|thums|sprite|carbonated/.test(s)) return 'cola';
+  if (/juice|drink|squash|nectar|beverage|maaza|frooti|slice|tang/.test(s)) return 'drink';
+  if (/noodle|ramen|maggi|pasta/.test(s)) return 'noodles';
+  if (/chip|crisp|kurkure|namkeen|puff|nacho/.test(s)) return 'chips';
+  if (/biscuit|cookie|cracker|oreo|bourbon|wafer/.test(s)) return 'biscuit';
+  if (/ketchup|sauce|chutney|mayo|dip/.test(s)) return 'sauce';
+  if (/gumm|jelly|candy|sweet|toffee|lolli|chocolate/.test(s)) return 'candy';
+  if (items[0] && items[0].e.liquid) return 'drink';
+  return 'other';
+}
+function computeAmounts(items, serving, presetPct){
+  const pcts = items.map((it,i) => presetPct && presetPct[i] != null ? presetPct[i] : it.pct != null ? it.pct : it.e.pct != null ? it.e.pct : null);
+  let fixed = pcts.reduce((a,p)=>a+(p||0),0);
+  if (fixed > 100){ pcts.forEach((p,i)=>{ if (p!=null) pcts[i] = p*100/fixed; }); fixed = 100; }
+  const free = pcts.map((p,i)=>p==null?i:-1).filter(i=>i>=0);
+  const ratio = items[0] && items[0].e.liquid ? 0.15 : 0.35;
+  let w = 1, ws = free.map(()=>{ const x=w; w*=ratio; return x; }), sum = ws.reduce((a,b)=>a+b,0);
+  free.forEach((idx,j)=> pcts[idx] = (100-fixed) * ws[j] / (sum||1));
+  items.forEach((it,i)=>{ it.pctUsed = pcts[i]; it.amount = pcts[i]/100*serving; });
+}
+function fmtAmt(a, liquid, catUnit){
+  const u = liquid && catUnit==='ml' ? 'ml' : 'g';
+  if (a >= 10) return Math.round(a) + ' ' + u;
+  if (a >= 1) return a.toFixed(1).replace(/\.0$/,'') + ' ' + u;
+  const mg = a*1000; if (mg >= 1) return Math.round(mg) + ' mg';
+  return 'less than 1 mg';
+}
+
+/* ---------- screens + progress ---------- */
+const ORDER = ['s-welcome','s-choose','s-line','s-lab','s-talk','s-kitchen','s-future','s-finish'];
+function show(id){
+  hush();
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id===id));
+  const n = ORDER.indexOf(id);
+  $$('#progress li').forEach((li,i)=>{ li.classList.toggle('done', i<n); li.classList.toggle('now', i===n); li.setAttribute('aria-current', i===n?'step':'false'); });
+  document.body.dataset.screen = id;
+  const h = $('#'+id+' h2'); if (h){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); }
+  window.scrollTo({top:0, behavior: S.motion?'smooth':'auto'});
+}
+function applyPrefs(){
+  document.documentElement.dataset.size = S.size;
+  document.documentElement.classList.toggle('contrast', !!S.contrast);
+  document.documentElement.classList.toggle('still', !S.motion);
+  $$('[data-pref]').forEach(el => {
+    const k = el.dataset.pref;
+    if (el.type==='checkbox') el.checked = !!S[k];
+    else if (el.dataset.val != null) el.setAttribute('aria-pressed', String(S[k]) === el.dataset.val);
+    else el.value = S[k];
+  });
+}
+
+/* ---------- WELCOME ---------- */
+function initWelcome(){
+  $('#nameInput').value = S.name === 'friend' ? '' : S.name;
+  $$('[data-pref]').forEach(el => {
+    const k = el.dataset.pref;
+    const ev = el.tagName==='BUTTON' ? 'click' : (el.type==='range' ? 'input' : 'change');
+    el.addEventListener(ev, () => {
+      if (el.type==='checkbox') S[k] = el.checked;
+      else if (el.dataset.val != null) S[k] = isNaN(+el.dataset.val) ? el.dataset.val : +el.dataset.val;
+      else S[k] = el.type==='range' ? +el.value : el.value;
+      applyPrefs(); savePrefs();
+    });
+  });
+  $('#testVoice')?.addEventListener('click', () => { S.name = cleanName(); speak(`Hello ${S.name}! I am Professor Nimbu. Can you hear me clearly? You can make me slower or faster.`); });
+  $('#welcomeForm').addEventListener('submit', e => { e.preventDefault(); S.name = cleanName(); savePrefs(); goChoose(); });
+  applyPrefs();
+}
+function cleanName(){ const v = $('#nameInput').value.trim().slice(0,30); return v || 'friend'; }
+
+/* ---------- CHOOSE ---------- */
+function goChoose(){
+  show('s-choose');
+  speak(`Nice to meet you, ${S.name}! Pick a product, type its ingredients, or upload a photo of the label.`);
+}
+function initChoose(){
+  $('#presetGrid').innerHTML = PRESETS.map((p,i)=>`<button type="button" class="preset" data-i="${i}"><span class="pe" aria-hidden="true">${p.icon}</span><span class="pn">${esc(p.name)}</span>${CATS[p.cat].label.toLowerCase()!==p.name.toLowerCase()?`<span class="pc">${esc(CATS[p.cat].label)}</span>`:''}</button>`).join('');
+  $('#presetGrid').addEventListener('click', e => { const b = e.target.closest('.preset'); if (!b) return; startPreset(PRESETS[+b.dataset.i]); });
+  $('#catSelect').innerHTML = '<option value="auto">Let the lab guess</option>' + Object.entries(CATS).map(([k,c])=>`<option value="${k}">${esc(c.label)}</option>`).join('');
+  $('#typeForm').addEventListener('submit', e => { e.preventDefault(); startCustom(); });
+  $('#photoInput').addEventListener('change', e => { const f = e.target.files[0]; if (f) handlePhoto(f); });
+  $('#exampleFill')?.addEventListener('click', () => { $('#ingText').value = 'Water, Sugar, Mango pulp (12%), Acidity regulator (330), Preservative (211), Colour (110), Added flavour'; $('#prodName').value = 'Mango drink'; });
+}
+function startPreset(p){
+  const c = CATS[p.cat];
+  const items = parseIngredients(p.text);
+  computeAmounts(items, c.serving, p.pct);
+  S.product = {name:p.name, cat:p.cat, serving:c.serving, unit:c.unit, kcal:c.kcal, sugar:c.sugar, sodium:c.sodium, satfat:c.satfat, items};
+  startLine();
+}
+function startCustom(){
+  const text = $('#ingText').value.trim();
+  if (text.length < 3){ $('#typeMsg').textContent = 'Please type or paste the ingredient list first.'; $('#ingText').focus(); return; }
+  const items = parseIngredients(text);
+  if (!items.length){ $('#typeMsg').textContent = 'I could not find any ingredients. Separate them with commas.'; return; }
+  const name = $('#prodName').value.trim() || 'My product';
+  let cat = $('#catSelect').value; if (cat==='auto') cat = guessCat(name, items);
+  const c = CATS[cat];
+  const num = id => { const v = parseFloat($(id)?.value); return isFinite(v) && v >= 0 ? v : null; };
+  const serving = num('#nServing') || c.serving;
+  computeAmounts(items, serving);
+  S.product = {name, cat, serving, unit:c.unit, items,
+    kcal: num('#nKcal') ?? c.kcal*serving/c.serving, sugar: num('#nSugar') ?? c.sugar*serving/c.serving,
+    sodium: num('#nSodium') ?? c.sodium*serving/c.serving, satfat: num('#nSat') ?? c.satfat*serving/c.serving,
+    estimated: num('#nKcal')==null};
+  startLine();
+}
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+async function handlePhoto(file){
+  const url = URL.createObjectURL(file);
+  $('#photoPreview').innerHTML = `<img src="${url}" alt="Your label photo">`;
+  $('#photoWrap').classList.add('has');
+  const msg = $('#photoMsg');
+  msg.textContent = 'Reading the words on your photo… (this can take a little while)';
+  speak(`Let me try to read your label, ${S.name}.`);
+  try {
+    if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    const r = await Promise.race([Tesseract.recognize(file, 'eng'), new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')), 30000))]);
+    let t = (r && r.data && r.data.text || '').replace(/\n+/g,' ');
+    const i = t.toLowerCase().indexOf('ingredient'); if (i >= 0) t = t.slice(i);
+    const j = t.search(/nutrition|allergen|best before|mfd|manufactured|net (wt|qty)/i); if (j > 20) t = t.slice(0, j);
+    if (t.trim().length < 8) throw new Error('empty');
+    $('#ingText').value = t.trim();
+    msg.textContent = 'Done! Please check the words below — fix any mistakes, then start the factory.';
+    speak('I read it! Please check the words, and fix anything I got wrong.');
+  } catch(e){
+    msg.textContent = 'I could not read the photo automatically here. Your photo stays on screen — please type the ingredients you see into the box below.';
+    speak(`I could not read that one by myself, ${S.name}. Please look at your photo and type the ingredients in the box.`);
+  }
+  $('#ingText').focus({preventScroll:false});
+}
+
+/* ---------- FACTORY LINE ---------- */
+function startLine(){
+  S.line = LINES[S.product.cat] || LINES.other; S.lineIdx = 0;
+  $('#lineTitle').textContent = `How ${S.product.name} is made in a factory`;
+  $('#lineSteps').innerHTML = S.line.map((s,i)=>`<li data-i="${i}"><span class="ln">${i+1}</span>${esc(s.name)}</li>`).join('');
+  show('s-line'); renderLine(true);
+}
+function renderLine(first){
+  const st = S.line[S.lineIdx], P = S.product, last = S.lineIdx === S.line.length-1;
+  $$('#lineSteps li').forEach((li,i)=>{ li.classList.toggle('done', i<S.lineIdx); li.classList.toggle('now', i===S.lineIdx); });
+  $('#lineSteps li.now')?.scrollIntoView({block:'nearest', inline:'center', behavior:S.motion?'smooth':'auto'});
+  $('#lineStage').innerHTML = lineSceneSVG(st, P.cat);
+  $('#lineFactory').innerHTML = `<h3>🏭 In the factory: ${esc(st.name)}</h3><p>${esc(st.f)}</p>${st.change && st.change!=='—'?`<p class="change"><b>What changes in the food:</b> ${esc(st.change)}</p>`:''}`;
+  $('#lineHome').innerHTML = `<h3><span class="tool" aria-hidden="true">${st.tool}</span> At home instead</h3><p>${esc(st.home==='—'?'Nothing needed at home for this step.':st.home)}</p>`;
+  $('#lineCount').textContent = `Step ${S.lineIdx+1} of ${S.line.length}`;
+  $('#linePrev').disabled = S.lineIdx===0;
+  $('#lineNext').textContent = last ? 'Go to the mixing lab ▶' : 'Next machine ▶';
+  const intro = first ? `Welcome to the factory line, ${S.name}! Before we mix the ingredients, see how ${P.name} is really made. ` : '';
+  speak(`${intro}Look, ${S.name}! ${st.name}. ${st.f} ${st.change && st.change!=='—' ? st.change : ''} At home, ${st.home==='—' ? 'you do not need this step.' : st.home.charAt(0).toLowerCase()+st.home.slice(1)}`);
+}
+function lineNav(d){
+  if (d>0 && S.lineIdx === S.line.length-1) return startLab();
+  S.lineIdx = Math.max(0, Math.min(S.line.length-1, S.lineIdx + d)); sound('pour'); renderLine();
+}
+
+/* ---------- LAB ---------- */
+const PROD_COLOUR = {drink:'#f0a43a', cola:'#5a3220', noodles:'#e6c77c', chips:'#e9c46a', biscuit:'#6b4630', sauce:'#c0392b', candy:'#d97a3a', other:'#c9b48a'};
+const TANK = {x:150, y:150, w:260, h:230};
+function labSVG(){
+  const T = TANK, solid = S.product && S.product.unit==='g';
+  const vessel = ({chips:'WEIGHING BOWL', noodles:'DOUGH MIXER', biscuit:'DOUGH MIXER', candy:'COOKING KETTLE', sauce:'COOKING KETTLE'})[S.product?.cat] || 'MIXING TANK';
+  return `<svg viewBox="0 0 600 440" class="labsvg" role="img" aria-label="Factory mixing tank">
+   <g filter="url(#rough)" stroke="#1d2433" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M20 430 H580" fill="none"/>
+    <rect x="${T.x-14}" y="${T.y+T.h}" width="20" height="40" fill="#cfd6dd"/><rect x="${T.x+T.w-6}" y="${T.y+T.h}" width="20" height="40" fill="#cfd6dd"/>
+    <path d="M${T.x} ${T.y} V${T.y+T.h-20} Q${T.x} ${T.y+T.h} ${T.x+20} ${T.y+T.h} H${T.x+T.w-20} Q${T.x+T.w} ${T.y+T.h} ${T.x+T.w} ${T.y+T.h-20} V${T.y}" fill="#eef3f6"/>
+   </g>
+   <clipPath id="tankClip"><path d="M${T.x+3} ${T.y} V${T.y+T.h-20} Q${T.x+3} ${T.y+T.h-3} ${T.x+20} ${T.y+T.h-3} H${T.x+T.w-20} Q${T.x+T.w-3} ${T.y+T.h-3} ${T.x+T.w-3} ${T.y+T.h-20} V${T.y}Z"/></clipPath>
+   <g clip-path="url(#tankClip)"><g id="layers"></g><rect id="mixed" x="${T.x}" y="${T.y}" width="${T.w}" height="${T.h}" fill="#f0a43a" opacity="0"/></g>
+   <g filter="url(#rough)" stroke="#1d2433" stroke-width="3" fill="none">
+    <path d="M${T.x} ${T.y} V${T.y+T.h-20} Q${T.x} ${T.y+T.h} ${T.x+20} ${T.y+T.h} H${T.x+T.w-20} Q${T.x+T.w} ${T.y+T.h} ${T.x+T.w} ${T.y+T.h-20} V${T.y}"/>
+    <path d="M${T.x-10} ${T.y} H${T.x+T.w+10}"/>
+   </g>
+   <text x="${T.x+T.w/2}" y="${T.y+T.h+30}" text-anchor="middle" font-size="14" font-weight="700" fill="#1d2433">${vessel}</text>
+   <g id="ticks" font-size="12" fill="#1d2433">${[0.25,0.5,0.75].map(f=>`<path d="M${T.x+T.w-22} ${T.y+T.h-f*T.h} h18" stroke="#1d2433" stroke-width="1.5"/><text x="${T.x+T.w-26}" y="${T.y+T.h-f*T.h+4}" text-anchor="end">${f*100}%</text>`).join('')}</g>
+   <g id="stirrer"><path d="M280 60 V${T.y+T.h-40}" stroke="#1d2433" stroke-width="5"/><path id="blade" d="M250 ${T.y+T.h-40} H310" stroke="#1d2433" stroke-width="7" stroke-linecap="round"/></g>
+   <rect x="262" y="40" width="36" height="24" rx="4" fill="#cfd6dd" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>
+   <rect id="stream" x="${T.x+T.w/2+52}" y="96" width="9" height="0" rx="4" fill="#56B4E9"/>
+   <g id="jug" transform="translate(360 30)">
+    <g id="jugInner">
+     <clipPath id="jugClip"><path d="M4 8 H66 L60 74 Q59 80 52 80 H18 Q11 80 10 74Z"/></clipPath>
+     <rect id="jugFill" x="0" y="80" width="80" height="0" fill="#56B4E9" clip-path="url(#jugClip)"/>
+     <rect id="jugPat" x="0" y="80" width="80" height="0" fill="url(#p-dots)" clip-path="url(#jugClip)"/>
+     <path d="M4 8 H66 L60 74 Q59 80 52 80 H18 Q11 80 10 74Z M0 8 H70 M-4 8 L4 0 H10" fill="none" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>
+     ${solid ? `<path d="M-6 12 h-22" stroke="#1d2433" stroke-width="7" stroke-linecap="round"/>` : `<path d="M66 22 Q86 26 82 48 Q80 60 62 62" fill="none" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>`}
+     ${[24,40,56].map(y=>`<path d="M12 ${y} h10" stroke="#1d2433" stroke-width="1.5"/>`).join('')}
+    </g>
+   </g>
+   <g filter="url(#rough)"><rect x="14" y="14" width="252" height="112" rx="8" fill="#fff" stroke="#1d2433" stroke-width="3"/><path d="M60 126 V146 M200 126 V146" stroke="#1d2433" stroke-width="3"/></g>
+   <text id="tankLabel" x="28" y="38" font-size="13" fill="#4a5263"></text>
+   <text x="28" y="60" font-size="12" font-weight="700" letter-spacing="1.5" fill="#D55E00">NOW ADDING</text>
+   <text id="jugName" x="28" y="84" font-size="19" font-weight="700" fill="#1d2433">—</text>
+   <text id="jugLabel" x="28" y="114" font-size="26" font-weight="700" fill="#1d2433"></text>
+   <g id="conveyor" transform="translate(430 372)">
+    <rect x="0" y="40" width="160" height="14" rx="7" fill="#cfd6dd" stroke="#1d2433" stroke-width="3" filter="url(#rough)"/>
+    <g id="bottles"></g>
+   </g>
+  </svg>`;
+}
+function tween(ms, fn){ return new Promise(res => { if (!S.motion){ fn(1); return res(); } const t0 = performance.now(); const f = now => { const p = Math.min(1,(now-t0)/ms); fn(p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2); p<1 ? requestAnimationFrame(f) : res(); }; requestAnimationFrame(f); }); }
+
+function buildSteps(items){
+  const steps = [{t:'intro'}];
+  let n = 0;
+  items.forEach((it,i)=>{ steps.push({t:'ing', i}); if (it.e.q) n++; if ((i+1)%3===0 && n) { steps.push({t:'quiz'}); } });
+  steps.push({t:'quiz'}); steps.push({t:'mix'});
+  return steps;
+}
+function startLab(){
+  const P = S.product;
+  S.steps = buildSteps(P.items); S.step = -1; S.covered = []; S.asked = new Set(); S.score = 0; S.total = 0; S.fill = 0;
+  $('#labStage').innerHTML = labSVG();
+  $('#mixed').setAttribute('fill', PROD_COLOUR[P.cat]);
+  $('#tankLabel').textContent = `Making: ${P.name.length>19?P.name.slice(0,18)+'…':P.name} (${P.serving} ${P.unit})`;
+  $('#strip').innerHTML = P.items.map((it,i)=>`<li data-i="${i}">${kindIcon(it.e.k,18)}<span>${esc(it.e.n)}</span></li>`).join('');
+  $('#card').innerHTML = legendHTML();
+  $('#labNext').textContent = 'Start ▶';
+  show('s-lab');
+  next();
+}
+function legendHTML(){
+  return `<h3>How to read the tank</h3><p>Each ingredient pours in as its own layer. Every type has its own <b>shape</b>, <b>colour</b> and <b>pattern</b>:</p>
+  <ul class="legend">${Object.entries(KINDS).map(([k,v])=>`<li>${kindIcon(k,20)} ${esc(v.label)}</li>`).join('')}</ul>
+  <p class="small">Tiny amounts are drawn as thin lines so you can still see them.</p>`;
+}
+async function next(){
+  if (S.busy) return; S.busy = true;
+  try {
+    S.step++;
+    const st = S.steps[S.step];
+    if (!st){ S.busy=false; return goTalk(); }
+    $('#labNext').disabled = true;
+    if (st.t==='intro') await stepIntro();
+    else if (st.t==='ing') await stepIng(st.i);
+    else if (st.t==='quiz'){ const done = await stepQuiz(); if (!done){ S.busy=false; $('#labNext').disabled=false; return next(); } }
+    else if (st.t==='mix') await stepMix();
+  } finally { S.busy = false; $('#labNext').disabled = false; }
+}
+async function stepIntro(){
+  const P = S.product;
+  const note = ({chips:' In the real factory the oil soaks in during frying and the masala is tumbled on, but here we weigh everything for one packet so you can compare amounts.', noodles:' In the factory, the oil goes in during frying and the salt mostly sits in the tastemaker sachet. Here we weigh it all for one packet.', biscuit:' The cream filling is added later in the factory, but here we weigh everything for one serving.'})[P.cat] || '';
+  speak(`Welcome to the mixing lab, ${S.name}! Now we measure every ingredient of ${P.name}. ${P.items.length} ingredients are on the label.${note} Here is a secret: ingredients are always listed from the biggest amount to the smallest. Press Next and we will pour the first one.`);
+  $('#labNext').textContent = 'Next ingredient ▶';
+}
+async function stepIng(i){
+  const P = S.product, it = P.items[i], e = it.e, K = KINDS[e.k];
+  const amt = fmtAmt(it.amount, e.liquid, P.unit);
+  $$('#strip li').forEach(li => { const j=+li.dataset.i; li.classList.toggle('now', j===i); li.classList.toggle('done', j<i); });
+  $('#strip li.now')?.scrollIntoView({block:'nearest', inline:'center', behavior:S.motion?'smooth':'auto'});
+  renderCard(it);
+  if (!S.covered.includes(e)) S.covered.push(e);
+  // pour
+  const jf = $('#jugFill'), jp = $('#jugPat'), jl = $('#jugLabel');
+  jf.setAttribute('fill', K.color); jp.setAttribute('fill', `url(#${K.pat})`);
+  jl.textContent = amt; $('#jugName').textContent = e.n.length>20 ? e.n.slice(0,19)+'…' : e.n;
+  $('#stream').setAttribute('fill', K.color);
+  const lvl = Math.max(10, Math.min(70, 10 + 60 * Math.sqrt(it.pctUsed/100)));
+  await tween(450, p => { const h = lvl*p; [jf,jp].forEach(r=>{ r.setAttribute('y', 80-h); r.setAttribute('height', h); }); });
+  let sp = `Do you see, ${S.name}, how much ${e.n.toLowerCase()} goes in? About ${amt.replace('ml',' millilitres').replace(/\bg\b/,' grams').replace('mg',' milligrams')} in one serving.`;
+  if (e.k==='sugar' && it.amount >= 4) sp += ` That is about ${Math.round(it.amount/4)} teaspoons of sugar!`;
+  sp += ' ' + e.why;
+  speak(sp);
+  $('#jug').classList.add('tilt'); sound('pour');
+  await sleep(350);
+  const st = $('#stream'); st.setAttribute('height', TANK.y + TANK.h - 96 - S.fill);
+  const h = Math.max(3, it.pctUsed/100 * TANK.h);
+  const y0 = TANK.y + TANK.h - S.fill;
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.innerHTML = `<rect x="${TANK.x}" width="${TANK.w}" fill="${K.color}"/><rect x="${TANK.x}" width="${TANK.w}" fill="url(#${K.pat})"/><line x1="${TANK.x}" x2="${TANK.x+TANK.w}" stroke="#1d2433" stroke-width="1" stroke-opacity=".5"/>`;
+  $('#layers').appendChild(g);
+  const rs = g.querySelectorAll('rect'), ln = g.querySelector('line');
+  await tween(750, p => { const hh = h*p; rs.forEach(r=>{ r.setAttribute('y', y0-hh); r.setAttribute('height', hh); }); ln.setAttribute('y1', y0-hh); ln.setAttribute('y2', y0-hh);
+    const jh = lvl*(1-p); [jf,jp].forEach(r=>{ r.setAttribute('y', 80-jh); r.setAttribute('height', jh); }); });
+  S.fill += h;
+  st.setAttribute('height', 0); $('#jug').classList.remove('tilt');
+}
+function renderCard(it){
+  const e = it.e, K = KINDS[e.k], P = S.product;
+  const rows = (e.world||[]).map(([r,s,t])=>`<li class="w-${s}${r===S.country?' mine':''}"><span class="wr">${esc(REGIONS[r]||r)}${r===S.country?' <em>(you)</em>':''}</span><span class="ws"><b aria-hidden="true">${STATUS[s].icon}</b> ${STATUS[s].txt}</span><span class="wt">${esc(t)}</span></li>`).join('');
+  $('#card').innerHTML = `
+   <div class="ctop">${kindIcon(e.k,34)}<div><h3>${esc(e.n)}</h3><p class="ckind">${esc(K.label)} · <b>${esc(fmtAmt(it.amount, e.liquid, P.unit))}</b> per serving <span class="small">(${it.pctUsed>=1?Math.round(it.pctUsed):it.pctUsed.toFixed(2)}% of the product${it.pct!=null?'':', estimated'})</span></p></div></div>
+   ${it.raw.toLowerCase() !== e.n.toLowerCase() ? `<p class="small onlabel">On the label: “${esc(it.raw)}”</p>`:''}
+   <div class="cgrid">
+    <section><h4>🔍 What is it?</h4><p>${esc(e.what)}</p></section>
+    <section><h4>🏭 Why does the factory use it?</h4><p>${esc(e.why)}</p></section>
+    <section class="wide"><h4>🫀 What it does in your body</h4><p>${esc(e.body)}</p></section>
+    ${rows ? `<section class="wide"><h4>🌍 Around the world</h4><ul class="world">${rows}</ul>${e.diff?`<p class="why-diff"><b>Why the difference?</b> ${esc(e.diff)}</p>`:''}</section>`:''}
+    ${e.home ? `<section class="wide home"><h4>🌿 The natural way</h4><p>${esc(e.home)}</p></section>`:''}
+   </div>
+   <button type="button" class="btn ghost" id="hearMore">🔊 Read this card to me</button>`;
+  $('#hearMore').onclick = () => {
+    const mine = (e.world||[]).find(w=>w[0]===S.country);
+    speak(`${e.n}. ${e.what} In your body: ${e.body} ${mine?`In ${REGIONS[mine[0]]}: ${STATUS[mine[1]].txt}. ${mine[2]}`:''} ${e.diff?'Why do countries differ? '+e.diff:''}`);
+  };
+}
+/* quiz */
+function stepQuiz(){
+  const pool = S.covered.filter(e => e.q && !S.asked.has(e.id));
+  if (!pool.length) return Promise.resolve(false);
+  const e = pool[Math.floor(Math.random()*pool.length)]; S.asked.add(e.id);
+  const [q, opts, a, ex] = e.q;
+  return new Promise(res => {
+    const m = $('#modal');
+    m.innerHTML = `<div class="mbox" role="dialog" aria-modal="true" aria-labelledby="qh">
+      <p class="mtag">Quick quiz · Do you remember?</p><h3 id="qh">${esc(q)}</h3>
+      <div class="opts">${opts.map((o,i)=>`<button type="button" class="opt" data-i="${i}"><span class="ol">${'ABC'[i]}</span>${esc(o)}</button>`).join('')}</div>
+      <div class="mfb" aria-live="polite"></div>
+      <button type="button" class="btn" id="qGo" hidden>Back to the factory ▶</button></div>`;
+    m.classList.add('open');
+    speak(`Quick quiz, ${S.name}! Do you remember? ${q} ${opts.map((o,i)=>'ABC'[i]+': '+o).join('. ')}`);
+    m.querySelector('.opt').focus();
+    m.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+      const i = +b.dataset.i, ok = i===a; S.total++; if (ok) S.score++;
+      m.querySelectorAll('.opt').forEach((x,j)=>{ x.disabled = true; if (j===a) x.classList.add('right'); else if (j===i) x.classList.add('wrong'); });
+      b.insertAdjacentHTML('beforeend', ok?' <b class="mark">✓ correct</b>':' <b class="mark">✕ not this one</b>');
+      m.querySelector('.mfb').innerHTML = `<p><b>${ok?'Well done!':'Good try!'}</b> ${esc(ex)}</p>`;
+      sound(ok?'good':'bad');
+      speak((ok ? `Well done, ${S.name}! ` : `Good try, ${S.name}. The answer is ${opts[a]}. `) + ex);
+      const g = $('#qGo'); g.hidden = false; g.focus();
+      g.onclick = () => { m.classList.remove('open'); m.innerHTML=''; updateScore(); res(true); };
+    });
+  });
+}
+function updateScore(){ $$('.scoreNow').forEach(el => el.textContent = `${S.score}/${S.total}`); }
+async function stepMix(){
+  const P = S.product;
+  $$('#strip li').forEach(li=>{ li.classList.remove('now'); li.classList.add('done'); });
+  speak(`All ${P.items.length} ingredients are in, ${S.name}! Now the machines finish it and pack it. Watch the ${({drink:'bottles',cola:'bottles',sauce:'bottles',biscuit:'biscuit packs'})[P.cat]||'packets'} come out.`);
+  $('#jugName').textContent = 'Mixing & packing'; $('#jugLabel').textContent = '✓ done';
+  $('#stirrer').classList.add('spin');
+  await tween(1600, p => $('#mixed').setAttribute('opacity', p*0.92));
+  $('#stirrer').classList.remove('spin');
+  const col = PROD_COLOUR[P.cat];
+  for (let k=0;k<3;k++){
+    const b = document.createElementNS('http://www.w3.org/2000/svg','g');
+    b.innerHTML = `<g transform="translate(14 14) scale(.62)">${glyph(packOf(P.cat), PACK_COL[P.cat])}</g>`;
+    b.setAttribute('transform', `translate(0 0)`); $('#bottles').appendChild(b);
+    await tween(600, p => b.setAttribute('transform', `translate(${10 + p*(120 - k*44)} 0)`));
+    sound('good');
+  }
+  $('#card').innerHTML = `<h3>Factory finished! 🎉</h3><p>You made <b>${esc(P.name)}</b> from ${P.items.length} ingredients.</p>
+   <p>Quiz score: <b class="scoreNow">${S.score}/${S.total}</b></p>${summaryChips()}`;
+  $('#labNext').textContent = 'Talk with Professor Nimbu ▶';
+}
+function summaryChips(){
+  const counts = {}; S.product.items.forEach(it => counts[it.e.k] = (counts[it.e.k]||0)+1);
+  return `<ul class="legend">${Object.entries(counts).map(([k,n])=>`<li>${kindIcon(k,20)} ${n} × ${esc(KINDS[k].label)}</li>`).join('')}</ul>`;
+}
+
+/* ---------- TALK (conversation) ---------- */
+const ADDITIVE_KINDS = ['pres','colour','thick','acid'];
+function additives(){ return S.product.items.filter(it => ADDITIVE_KINDS.includes(it.e.k) || (it.e.k==='flav' && !['salt','spice'].includes(it.e.id)) || ['hfcs','glucose','invert','maltodextrin','aspartame','sucralose','acek','hydrog'].includes(it.e.id)); }
+function goTalk(){
+  show('s-talk');
+  $('#chat').innerHTML = ''; $('#chatOpts').innerHTML = '';
+  const P = S.product, ad = additives();
+  say(`We made it together, ${S.name}! ${P.items.length} ingredients went into this ${P.name}. ${ad.length} of them are things you would not find in a home kitchen. Tell me honestly — how often would you eat or drink this?`,
+    [['Every day', ()=>{ me('Every day'); say(`Thank you for being honest! Having it every day adds up. Later I will show you what years of that could do. But first —`); ask2(); }],
+     ['Sometimes', ()=>{ me('Sometimes'); say(`Sometimes is a lot better than every day. A treat is a treat! Now —`); ask2(); }],
+     ['Rarely or never', ()=>{ me('Rarely or never'); say(`Wonderful. You already have a good habit. Now —`); ask2(); }]]);
+}
+function ask2(){
+  setTimeout(()=> say(`Would you like to make something like this yourself? To drink at home, or even to sell?`,
+    [['Yes — to enjoy at home', ()=>{ me('Yes — to enjoy at home'); say(`Lovely! At home you can skip the preservatives and colours, because you eat it fresh. Let us go to the kitchen.`, [['Go to the kitchen 🍳', goKitchen]]); }],
+     ['Yes — to sell it', ()=>{ me('Yes — to sell it'); say(`A real food business in India needs FSSAI registration or a licence, safe-kitchen rules, lab testing, and a label listing every ingredient from biggest to smallest — just like the one we read today. Here is the big trade-off: without preservatives, food does not last long on a shop shelf. Many small brands sell fresh, cold, and local instead. Want to see the natural recipe?`, [['Show me the recipe 🍳', goKitchen]]); }],
+     ['No, thank you', ()=>{ me('No, thank you'); say(`That is okay! But the natural version is so easy, let me show you anyway.`, [['Okay, show me 🍳', goKitchen]]); }]]), S.motion?900:50);
+}
+function say(text, opts){
+  const c = $('#chat');
+  c.insertAdjacentHTML('beforeend', `<li class="nim"><span class="who">Prof. Nimbu</span><p>${esc(text)}</p></li>`);
+  c.lastElementChild.scrollIntoView({block:'end', behavior:S.motion?'smooth':'auto'});
+  speak(text);
+  const o = $('#chatOpts'); o.innerHTML = '';
+  (opts||[]).forEach(([label, fn]) => { const b = document.createElement('button'); b.type='button'; b.className='btn choice'; b.textContent = label; b.onclick = () => { o.innerHTML=''; fn(); }; o.appendChild(b); });
+  o.querySelector('button')?.focus({preventScroll:true});
+}
+function me(text){ $('#chat').insertAdjacentHTML('beforeend', `<li class="me"><span class="who">${esc(S.name)}</span><p>${esc(text)}</p></li>`); }
+
+/* ---------- KITCHEN ---------- */
+function goKitchen(){
+  const P = S.product, c = CATS[P.cat], r = c.home, ad = additives();
+  $('#recipe').innerHTML = `
+   <div class="rhead"><h3>${esc(r.title)}</h3><p class="small">⏱ ${esc(r.time)} · natural version of <b>${esc(P.name)}</b></p></div>
+   <div class="rcols">
+    <section><h4>You need</h4><ul class="ticks">${r.ing.map(x=>`<li><label><input type="checkbox"> ${esc(x)}</label></li>`).join('')}</ul></section>
+    <section><h4>Steps</h4><ol class="steps">${r.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></section>
+   </div>
+   <p class="note">💡 ${esc(r.note)}</p>
+   ${ad.length?`<section><h4>What you leave out at home</h4><ul class="chips">${ad.map(it=>`<li>${kindIcon(it.e.k,18)} ${esc(it.e.n)}</li>`).join('')}</ul></section>`:''}
+   ${nutCompareHTML()}
+   <table class="compare"><caption>Factory vs. your kitchen</caption>
+    <tr><th scope="col"></th><th scope="col">🏭 Factory</th><th scope="col">🍳 Kitchen</th></tr>
+    <tr><th scope="row">Ingredients</th><td>${P.items.length}</td><td>${r.ing.length}</td></tr>
+    <tr><th scope="row">Additives</th><td>${ad.length}</td><td>0</td></tr>
+    <tr><th scope="row">Lasts</th><td>Months</td><td>Hours to a week (keep cold)</td></tr>
+    <tr><th scope="row">Packaging</th><td>${esc(c.pack.name)} (${esc(c.pack.recyclable)})</td><td>Your own glass or plate</td></tr>
+    <tr><th scope="row">You control sugar & salt?</th><td>No</td><td>Yes</td></tr>
+   </table>`;
+  show('s-kitchen');
+  speak(`Welcome to the kitchen, ${S.name}! Here is how to make ${r.title}. It takes ${r.time}. ${r.steps[0]} Tick each thing you have. Below, compare the nutrients: bought versus homemade. Then I will show you what eating each one every day could do over the years.`);
+}
+
+/* ---------- NUTRIENTS: bought vs homemade ---------- */
+function nutPair(){
+  const P = S.product, c = CATS[P.cat], N = NUT[P.cat] || NUT.other, f = P.serving / c.serving;
+  const b = {}, h = {};
+  Object.keys(N.bought).forEach(k => { b[k] = N.bought[k]*f; h[k] = N.home[k]*f; });
+  b.kcal = P.kcal; b.sugar = P.sugar; b.sodium = P.sodium; b.satfat = P.satfat; b.added = Math.min(b.added, b.sugar);
+  return {b, h};
+}
+function nutCompareHTML(){
+  const {b, h} = nutPair(), P = S.product;
+  const fmt = v => v >= 10 ? Math.round(v) : (Math.round(v*10)/10);
+  const rows = NUT_ROWS.map(([k,label,u,dir]) => {
+    const mx = Math.max(b[k], h[k], 0.0001), wb = b[k]/mx*100, wh = h[k]/mx*100;
+    const diff = Math.abs(b[k]-h[k]) / mx, small = Math.abs(b[k]-h[k]) < ({mg:8, kcal:10}[u] || 0.6);
+    const win = (diff < 0.1 || small) ? 'Same' : ((dir==='less') === (h[k] < b[k]) ? 'Homemade' : 'Bought');
+    return `<div class="nrow"><div class="nlab"><b>${label}</b><span class="nwin w-${win.toLowerCase()}">${win==='Same'?'≈ about the same':'✓ '+win+' is better'}</span></div>
+     <div class="nbar"><span class="ntag">🏭 Bought</span><span class="ntrack"><svg viewBox="0 0 100 10" preserveAspectRatio="none"><rect width="${wb}" height="10" fill="#E69F00"/><rect width="${wb}" height="10" fill="url(#p-cross)"/></svg></span><span class="nval">${fmt(b[k])} ${u}</span></div>
+     <div class="nbar"><span class="ntag">🍳 Homemade</span><span class="ntrack"><svg viewBox="0 0 100 10" preserveAspectRatio="none"><rect width="${wh}" height="10" fill="#009E73"/><rect width="${wh}" height="10" fill="url(#p-dots)"/></svg></span><span class="nval">${fmt(h[k])} ${u}</span></div></div>`;
+  }).join('');
+  return `<section class="nutcmp"><h4>Nutrients in one serving (${P.serving} ${P.unit}): bought vs homemade</h4>
+    <p class="small">For energy, sugar, sodium and saturated fat, less is better. For fibre, protein and vitamin C, more is better.</p>${rows}
+    <p class="small">Approximate values from typical labels and standard food tables${P.estimated?'; the bought values are typical for this kind of product because none were entered':''}. Homemade sugar comes from the fruit itself, along with its fibre.</p></section>`;
+}
+
+/* ---------- FUTURE simulator ---------- */
+function goFuture(){ show('s-future'); renderFuture(1); speak(`This is the time machine, ${S.name}. On the left, someone eats the bought ${S.product.name} every day. On the right, someone eats the homemade version. Choose how many servings and how many years, then press Play to watch their body and heart change. Remember, it is a rough picture, not a fortune-teller.`); }
+function initFuture(){ $$('#futureCtl input, #futureCtl select').forEach(el => el.addEventListener('input', () => renderFuture(1))); }
+let playing = false;
+async function playYears(){
+  if (playing) return; playing = true; const b = $('#fPlay'); b.disabled = true;
+  $('.people-box')?.scrollIntoView({block:'start', behavior:S.motion?'smooth':'auto'});
+  const yrs = +$('#fYears').value;
+  speak(`Watch, ${S.name}. Year by year, ${yrs} years go by.`);
+  await tween(Math.max(2500, yrs*450), p => renderFuture(p, true));
+  renderFuture(1); playing = false; b.disabled = false;
+  const r = S.lastFuture;
+  speak(`After ${yrs} years, the person eating the bought one every day could gain about ${r.kgB.toFixed(1)} kilos, compared with ${r.kgH.toFixed(1)} for homemade. Look at the artery picture: the bought side has more build-up. This is an illustration, but the direction is real.`);
+}
+function futureCalc(n, sv, yrsNow, who, cat, bought){
+  const sugarAdded = n.added*sv, kcal = n.kcal*sv, salt = n.sodium*sv*2.5/1000, sat = n.satfat*sv;
+  // the body makes up for part of solid-food calories by eating less later, but hardly any from sugary drinks
+  const comp = ['drink','cola'].includes(cat) ? 1 : (bought ? 0.5 : 0.4);
+  const kg = kcal*comp/10*0.45*(1-Math.exp(-yrsNow*Math.LN2));
+  const sugaryDrink = bought && ['drink','cola'].includes(cat);
+  const t2d = sugaryDrink ? 13*sv : 0;
+  const stroke = 23*salt/5;
+  const satRisk = sat/20*15;
+  const risk = t2d + stroke + satRisk + kg*1.5;
+  const plaque = Math.min(0.65, risk/100 * Math.min(1, yrsNow/10) * 1.2);
+  return {sugarAdded, kcal, salt, sat, kg, t2d, stroke, risk, plaque};
+}
+function lifePerson(r, base, label, col, cat, bought){
+  const f = Math.min(1.9, 1 + r.kg/base*1.6), bw = 34*f, hw = 24*Math.min(1.5, f), cx = 80;
+  const open = Math.round((1-r.plaque)*100), lum = 18*(1-r.plaque);
+  const strain = r.risk > 25;
+  const food = bought ? glyph(packOf(cat), PACK_COL[cat]) : glyph(({drink:'juice',cola:'juice',noodles:'strands',chips:'chip',biscuit:'biscuit',sauce:'tomato',candy:'mango'})[cat]||'mix');
+  return `<figure class="person"><svg viewBox="0 0 220 250" role="img" aria-label="${esc(label)}: heart artery ${open}% open">
+   <g filter="url(#rough)" stroke="#1d2433" stroke-width="3" stroke-linejoin="round">
+    <path d="M${cx-hw/2} 150 L${cx-hw/2-2} 240 M${cx+hw/2} 150 L${cx+hw/2+2} 240" stroke-width="${9+(f-1)*9}" stroke-linecap="round" fill="none"/>
+    <path d="M${cx-bw/2-6} 78 Q${cx} 66 ${cx+bw/2+6} 78 L${cx+bw/2+8+(f-1)*12} 146 Q${cx} ${160+(f-1)*16} ${cx-bw/2-8-(f-1)*12} 146Z" fill="${col}"/>
+    <path d="M${cx-bw/2-4} 84 L${cx-bw/2-18-(f-1)*8} 138" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="${cx}" cy="44" r="22" fill="#f6d7b0"/>
+    <path d="M${cx-8} 52 Q${cx} 57 ${cx+8} 52" fill="none" stroke-width="2.5"/>
+   </g>
+   <circle cx="${cx-7}" cy="40" r="2.5" fill="#1d2433"/><circle cx="${cx+7}" cy="40" r="2.5" fill="#1d2433"/>
+   <g class="eat" style="transform-origin:${cx+bw/2+4}px 84px">
+    <path d="M${cx+bw/2+4} 84 L${cx+bw/2+26} 128" stroke="#1d2433" stroke-width="7" stroke-linecap="round"/>
+    <g transform="translate(${cx+bw/2+28} 136) scale(.55)">${food}</g>
+   </g>
+   <g transform="translate(${cx-8} 102)"><path class="beat" d="M0 6 C-10 -6 -22 2 -14 12 L0 24 L14 12 C22 2 10 -6 0 6Z" fill="#D55E00" stroke="#1d2433" stroke-width="2"/>${strain?`<path d="M18 -2 l5 -5 l3 6 l5 -5" fill="none" stroke="#1d2433" stroke-width="2"/>`:''}</g>
+   <g transform="translate(178 70)">
+    <circle r="26" fill="#f3c6b0" stroke="#1d2433" stroke-width="3"/>
+    <circle r="22" fill="#E69F00"/><circle r="22" fill="url(#p-cross)"/>
+    <circle r="${lum.toFixed(1)}" fill="#fff" stroke="#1d2433" stroke-width="1.5"/>
+    <circle r="${(lum*0.45).toFixed(1)}" fill="#D55E00" opacity=".75"/>
+    <text y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#1d2433">Artery</text>
+    <text y="57" text-anchor="middle" font-size="12" fill="#1d2433">${open}% open</text>
+   </g>
+   <text x="178" y="160" text-anchor="middle" font-size="12" fill="#1d2433">Heart strain:</text>
+   <text x="178" y="176" text-anchor="middle" font-size="14" font-weight="700" fill="#1d2433">${r.risk<12?'Low':r.risk<30?'Medium':'High'}</text>
+   <text x="178" y="206" text-anchor="middle" font-size="12" fill="#1d2433">Weight</text>
+   <text x="178" y="223" text-anchor="middle" font-size="16" font-weight="700" fill="#1d2433">+${r.kg.toFixed(1)} kg</text>
+  </svg><figcaption>${label}</figcaption></figure>`;
+}
+function duo(label, vb, vh, max, unit, digits=1){
+  const bar = (v, col, pat) => `<svg viewBox="0 0 100 10" preserveAspectRatio="none"><rect width="${Math.min(100,v/max*100)}" height="10" fill="${col}"/><rect width="${Math.min(100,v/max*100)}" height="10" fill="url(#${pat})"/></svg>`;
+  const fm = v => v.toLocaleString('en-IN', {maximumFractionDigits:digits});
+  return `<div class="duo"><div class="mlab"><span>${label}</span></div>
+   <div class="nbar"><span class="ntag">🏭 Bought</span><span class="ntrack">${bar(vb,'#E69F00','p-cross')}</span><span class="nval">${fm(vb)} ${unit}</span></div>
+   <div class="nbar"><span class="ntag">🍳 Home</span><span class="ntrack">${bar(vh,'#009E73','p-dots')}</span><span class="nval">${fm(vh)} ${unit}</span></div></div>`;
+}
+function renderFuture(t=1, animOnly=false){
+  const P = S.product, c = CATS[P.cat], {b, h} = nutPair();
+  const sv = +$('#fServ').value, yrs = +$('#fYears').value, who = $('#fWho').value;
+  const yNow = yrs * t;
+  $('#fServOut').textContent = sv === 0 ? 'none' : `${sv} a day`; $('#fYearsOut').textContent = `${yrs} year${yrs>1?'s':''}`;
+  $('#fYearNow').textContent = t < 1 ? `Year ${Math.floor(yNow)+1} of ${yrs}` : `After ${yrs} year${yrs>1?'s':''}`;
+  const base = who==='child' ? 30 : 62;
+  const rb = futureCalc(b, sv, yNow, who, P.cat, true), rh = futureCalc(h, sv, yNow, who, P.cat, false);
+  $('#people').innerHTML = lifePerson(rb, base, `Eats bought ${P.name}`, '#E69F00', P.cat, true) + lifePerson(rh, base, `Eats the homemade version`, '#009E73', P.cat, false);
+  $('#people').classList.toggle('playing', t < 1);
+  if (animOnly) return;
+  const rB = futureCalc(b, sv, yrs, who, P.cat, true), rH = futureCalc(h, sv, yrs, who, P.cat, false);
+  S.lastFuture = {kgB:rB.kg, kgH:rH.kg};
+  const saltLimit = who==='child' ? 3 : 5;
+  const packs = Math.round(sv*365*yrs), plastic = packs*c.pack.grams/1000;
+  let out = '';
+  out += `<section class="fcard"><h4>🍬 Added sugar per day</h4>${duo('Teaspoons (WHO ideal: under about 6)', rB.sugarAdded/4, rH.sugarAdded/4, 20, 'tsp')}<p class="small">Bought: ${(rB.sugarAdded*365*yrs/1000).toFixed(1)} kg of added sugar in ${yrs} years.</p></section>`;
+  out += `<section class="fcard"><h4>🧂 Salt per day</h4>${duo(`Grams (limit for ${who==='child'?'a child about 3 g':'an adult 5 g'})`, rB.salt, rH.salt, saltLimit*1.5, 'g')}<p class="small">Too much salt raises blood pressure over time.</p></section>`;
+  out += `<section class="fcard"><h4>⚖️ Weight after ${yrs} years</h4>${duo('Possible extra weight', rB.kg, rH.kg, 25, 'kg')}<p class="small">${Math.round(rB.kcal)} vs ${Math.round(rH.kcal)} kcal a day. Assumes the body makes up for about half of the calories from solid food by eating less later, but almost none from sugary drinks.${who==='child'?' Children are still growing, so extra energy is stored as fat rather than height.':''}</p></section>`;
+  out += `<section class="fcard"><h4>🫀 Heart & diabetes</h4>${rB.t2d?duo('Type 2 diabetes risk (approx. increase)', rB.t2d, rH.t2d, 60, '%', 0):''}${duo('Stroke risk from salt (approx. increase)', rB.stroke, rH.stroke, 50, '%', 0)}${duo('Saturated fat per day (limit about 20 g)', rB.sat, rH.sat, 25, 'g')}
+    <p class="small">Based on large studies: about 13% higher diabetes risk per daily sugary drink (BMJ, 2015) and about 23% more strokes per extra 5 g of salt a day (BMJ, 2009).${c.acid && sv>0?' 🦷 Sour, sweet drinks sipped often also soften tooth enamel.':''}</p></section>`;
+  out += `<section class="fcard env"><h4>🌍 The planet</h4>${duo(`Packaging thrown away (${esc(c.pack.recyclable)})`, plastic, 0, Math.max(1, plastic), 'kg')}<p class="small">${packs.toLocaleString('en-IN')} ${esc(c.pack.name)}s in ${yrs} years. Water used to grow and make it: about ${Math.round(sv*365*yrs*c.waterL).toLocaleString('en-IN')} litres — like ${Math.round(sv*365*yrs*c.waterL/150).toLocaleString('en-IN')} bathtubs.</p></section>`;
+  $('#futureOut').innerHTML = out;
+  $('#futureNote').textContent = (P.estimated ? 'Nutrition numbers are typical values for this kind of product, because none were entered. ' : '') + 'The body, heart and artery pictures are illustrations built from published averages — not a medical prediction. Every body is different. For personal advice, talk to a doctor or dietitian.';
+}
+
+/* ---------- FINISH ---------- */
+function goFinish(){
+  const P = S.product, stars = S.total ? Math.round(S.score/S.total*3) : 3;
+  const d = new Date().toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+  $('#cert').innerHTML = `<p class="ctag">Ingredient Lab · Certificate</p>
+   <h3>${esc(S.name)}</h3><p>has taken apart and rebuilt</p><p class="cprod">${esc(P.name)}</p>
+   <p class="stars" aria-label="${stars} out of 3 stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</p>
+   <p>Quiz score: <b>${S.score}/${S.total}</b> · ${P.items.length} ingredients studied</p>
+   <p class="small">Signed, Professor Nimbu 🍋 · ${d}</p>`;
+  show('s-finish');
+  speak(`Congratulations, ${S.name}! You are now an official Label Detective. Next time you shop, read the label first: the first three ingredients tell you most of the story.`);
+}
+function copySummary(){
+  const P = S.product;
+  const t = `I rebuilt "${P.name}" in the Ingredient Lab!\nIngredients: ${P.items.map(i=>i.e.n).join(', ')}\nAdditives a home kitchen would not need: ${additives().length}\nQuiz: ${S.score}/${S.total}\nNatural version: ${CATS[P.cat].home.title}`;
+  navigator.clipboard?.writeText(t).then(()=>{ $('#copyMsg').textContent = 'Copied!'; }).catch(()=>{ $('#copyMsg').textContent = 'Copy is not allowed here — select the certificate text instead.'; });
+}
+
+/* ---------- boot ---------- */
+function boot(){
+  injectDefs();
+  $('#guideArt').innerHTML = guideSVG();
+  initWelcome(); initChoose(); initFuture();
+  $('#labNext').addEventListener('click', next);
+  $('#linePrev').addEventListener('click', () => lineNav(-1));
+  $('#lineNext').addEventListener('click', () => lineNav(1));
+  $('#fPlay')?.addEventListener('click', playYears);
+  $$('.repeatBtn').forEach(b => b.addEventListener('click', () => speak(lastSpoken)));
+  $$('.hushBtn').forEach(b => b.addEventListener('click', hush));
+  $('#toFuture').addEventListener('click', goFuture);
+  $('#toFinish').addEventListener('click', goFinish);
+  $('#againBtn').addEventListener('click', () => { S.product=null; goChoose(); });
+  $('#copyBtn').addEventListener('click', copySummary);
+  $$('#progress li').forEach((li,i) => li.addEventListener('click', () => { if (li.classList.contains('done')){ const id = ORDER[i]; if (id==='s-choose') goChoose(); else if (id==='s-welcome') show('s-welcome'); else if (S.product){ ({ 's-line':()=>{show('s-line'); renderLine();}, 's-lab':()=>show('s-lab'), 's-talk':()=>show('s-talk'), 's-kitchen':()=>show('s-kitchen'), 's-future':goFuture })[id]?.(); } } }));
+  document.addEventListener('keydown', e => { if (e.key==='Escape') hush(); });
+  show('s-welcome');
+  $('#guideText').textContent = 'Hello! I am Professor Nimbu. Tell me your name and we will build a product together.';
+}
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
